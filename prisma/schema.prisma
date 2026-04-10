@@ -1,0 +1,156 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  PM_ADMIN
+  DEVELOPER
+}
+
+enum TaskStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum RepositoryProvider {
+  GITHUB
+}
+
+model User {
+  id                 String          @id @default(cuid())
+  name               String?         @db.VarChar(100)
+  email              String          @unique @db.VarChar(200)
+  role               Role            @default(DEVELOPER)
+  passwordHash       String          @db.VarChar(100)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  createdProjects    Project[]       @relation("ProjectCreator")
+  projectMemberships ProjectMember[]
+  createdTasks       Task[]          @relation("TaskCreator")
+  ownedTasks         Task[]          @relation("TaskPrimaryOwner")
+  taskAssignments    TaskAssignee[]
+}
+
+model Project {
+  id              String          @id @default(cuid())
+  name            String
+  description     String?
+  status          ProjectStatus   @default(ACTIVE)
+  startDate       DateTime?
+  endDate         DateTime?
+  createdById     String
+  taskCodeCounter Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  createdBy       User            @relation("ProjectCreator", fields: [createdById], references: [id])
+  members         ProjectMember[]
+  repositories    Repository[]
+  tasks           Task[]
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  joinedAt  DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+}
+
+model Task {
+  id             String         @id @default(cuid())
+  projectId      String
+  code           String
+  title          String
+  description    String?
+  status         TaskStatus     @default(BACKLOG)
+  startDate      DateTime?
+  endDate        DateTime?
+  primaryOwnerId String?
+  sequenceNumber Int
+  createdById    String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  archivedAt     DateTime?
+  commits        GitCommit[]
+  createdBy      User           @relation("TaskCreator", fields: [createdById], references: [id])
+  primaryOwner   User?          @relation("TaskPrimaryOwner", fields: [primaryOwnerId], references: [id])
+  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignees      TaskAssignee[]
+
+  @@unique([projectId, code])
+  @@index([projectId, status])
+  @@index([primaryOwnerId])
+}
+
+model TaskAssignee {
+  id         String   @id @default(cuid())
+  taskId     String
+  userId     String
+  assignedAt DateTime @default(now())
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([userId])
+}
+
+model Repository {
+  id           String             @id @default(cuid())
+  projectId    String
+  provider     RepositoryProvider @default(GITHUB)
+  owner        String
+  name         String
+  fullName     String
+  githubRepoId String?            @unique
+  isArchived   Boolean            @default(false)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  commits      GitCommit[]
+  project      Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, fullName])
+}
+
+model GitCommit {
+  id                String     @id @default(cuid())
+  repositoryId      String
+  taskId            String?
+  sha               String     @unique
+  shortSha          String
+  message           String
+  authorName        String?
+  authorEmail       String?
+  authorGithubLogin String?
+  committedAt       DateTime
+  githubUrl         String
+  filesChangedCount Int?
+  matchedTaskCode   String?
+  createdAt         DateTime   @default(now())
+  repository        Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  task              Task?      @relation(fields: [taskId], references: [id])
+
+  @@index([repositoryId, committedAt])
+  @@index([taskId])
+}
