@@ -1,5 +1,14 @@
 import { redirect } from "next/navigation";
 
-export default function Page() {
-  redirect("/login");
+import { auth } from "@/auth";
+import { getDefaultAppRoute } from "@/lib/auth/redirects";
+
+export default async function Page() {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  redirect(getDefaultAppRoute(session.user.role));
 }

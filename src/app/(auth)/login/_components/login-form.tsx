@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { getSafeCallbackUrl } from "@/lib/auth/redirects";
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -13,7 +15,7 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl")) || "/";
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,7 +39,7 @@ export function LoginForm() {
         return;
       }
 
-      router.push(result.url || callbackUrl);
+      router.push(callbackUrl);
       router.refresh();
     });
   }

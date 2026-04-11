@@ -1,12 +1,23 @@
 import { redirect } from "next/navigation";
+
 import { auth } from "@/auth";
+import { getPostLoginRedirect } from "@/lib/auth/redirects";
+
 import { LoginForm } from "./_components/login-form";
 
-export default async function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{
+    callbackUrl?: string | string[];
+  }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await auth();
 
-  if (session) {
-    redirect("/dashboard");
+  if (session?.user) {
+    const { callbackUrl } = await searchParams;
+
+    redirect(getPostLoginRedirect(session.user.role, callbackUrl));
   }
 
   return (
