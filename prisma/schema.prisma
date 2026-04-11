@@ -34,36 +34,56 @@ enum RepositoryProvider {
   GITHUB
 }
 
+enum ConnectionStatus {
+  CONNECTED
+  FAILED
+  DISCONNECTED
+}
+
+enum TaskActivityAction {
+  TASK_CREATED
+  TASK_UPDATED
+  STATUS_CHANGED
+  ASSIGNEES_CHANGED
+  PRIMARY_OWNER_CHANGED
+  TASK_ARCHIVED
+  TASK_UNARCHIVED
+  COMMIT_LINKED
+  COMMIT_UNLINKED
+}
+
 model User {
-  id                 String          @id @default(cuid())
-  name               String?         @db.VarChar(100)
-  email              String          @unique @db.VarChar(200)
-  role               Role            @default(DEVELOPER)
-  passwordHash       String          @db.VarChar(100)
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  createdProjects    Project[]       @relation("ProjectCreator")
+  id                 String            @id @default(cuid())
+  name               String?           @db.VarChar(100)
+  email              String            @unique @db.VarChar(200)
+  role               Role              @default(DEVELOPER)
+  passwordHash       String            @db.VarChar(100)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  createdProjects    Project[]         @relation("ProjectCreator")
   projectMemberships ProjectMember[]
-  createdTasks       Task[]          @relation("TaskCreator")
-  ownedTasks         Task[]          @relation("TaskPrimaryOwner")
+  createdTasks       Task[]            @relation("TaskCreator")
+  ownedTasks         Task[]            @relation("TaskPrimaryOwner")
   taskAssignments    TaskAssignee[]
+  taskActivityLogs   TaskActivityLog[]
 }
 
 model Project {
-  id              String          @id @default(cuid())
-  name            String
-  description     String?
-  status          ProjectStatus   @default(ACTIVE)
-  startDate       DateTime?
-  endDate         DateTime?
-  createdById     String
-  taskCodeCounter Int             @default(0)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  createdBy       User            @relation("ProjectCreator", fields: [createdById], references: [id])
-  members         ProjectMember[]
-  repositories    Repository[]
-  tasks           Task[]
+  id                    String                 @id @default(cuid())
+  name                  String
+  description           String?
+  status                ProjectStatus          @default(ACTIVE)
+  startDate             DateTime?
+  endDate               DateTime?
+  createdById           String
+  taskCodeCounter       Int                    @default(0)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  createdBy             User                   @relation("ProjectCreator", fields: [createdById], references: [id])
+  members               ProjectMember[]
+  repositoryConnections RepositoryConnection[]
+  tasks                 Task[]
+  commits               GitCommit[]
 }
 
 model ProjectMember {
@@ -79,27 +99,29 @@ model ProjectMember {
 }
 
 model Task {
-  id             String         @id @default(cuid())
+  id             String            @id @default(cuid())
   projectId      String
   code           String
   title          String
   description    String?
-  status         TaskStatus     @default(BACKLOG)
+  status         TaskStatus        @default(BACKLOG)
   startDate      DateTime?
   endDate        DateTime?
   primaryOwnerId String?
   sequenceNumber Int
   createdById    String
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
   archivedAt     DateTime?
   commits        GitCommit[]
-  createdBy      User           @relation("TaskCreator", fields: [createdById], references: [id])
-  primaryOwner   User?          @relation("TaskPrimaryOwner", fields: [primaryOwnerId], references: [id])
-  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  activityLogs   TaskActivityLog[]
+  createdBy      User              @relation("TaskCreator", fields: [createdById], references: [id])
+  primaryOwner   User?             @relation("TaskPrimaryOwner", fields: [primaryOwnerId], references: [id])
+  project        Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignees      TaskAssignee[]
 
   @@unique([projectId, code])
+  @@unique([projectId, sequenceNumber])
   @@index([projectId, status])
   @@index([primaryOwnerId])
 }
@@ -116,41 +138,60 @@ model TaskAssignee {
   @@index([userId])
 }
 
-model Repository {
-  id           String             @id @default(cuid())
-  projectId    String
-  provider     RepositoryProvider @default(GITHUB)
-  owner        String
-  name         String
-  fullName     String
-  githubRepoId String?            @unique
-  isArchived   Boolean            @default(false)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  commits      GitCommit[]
-  project      Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+model RepositoryConnection {
+  id               String             @id @default(cuid())
+  projectId        String
+  provider         RepositoryProvider @default(GITHUB)
+  owner            String
+  name             String
+  fullName         String
+  githubRepoId     String?            @unique
+  connectionStatus ConnectionStatus   @default(CONNECTED)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  commits          GitCommit[]
+  project          Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, fullName])
+  @@index([projectId, connectionStatus])
 }
 
 model GitCommit {
-  id                String     @id @default(cuid())
-  repositoryId      String
-  taskId            String?
-  sha               String     @unique
-  shortSha          String
-  message           String
-  authorName        String?
-  authorEmail       String?
-  authorGithubLogin String?
-  committedAt       DateTime
-  githubUrl         String
-  filesChangedCount Int?
-  matchedTaskCode   String?
-  createdAt         DateTime   @default(now())
-  repository        Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  task              Task?      @relation(fields: [taskId], references: [id])
+  id                     String               @id @default(cuid())
+  repositoryConnectionId String
+  projectId              String
+  taskId                 String?
+  sha                    String               @unique
+  shortSha               String
+  message                String
+  authorName             String?
+  authorEmail            String?
+  authorGithubLogin      String?
+  committedAt            DateTime
+  githubUrl              String
+  filesChangedCount      Int?
+  matchedTaskCode        String?
+  createdAt              DateTime             @default(now())
+  repositoryConnection   RepositoryConnection @relation(fields: [repositoryConnectionId], references: [id], onDelete: Cascade)
+  project                Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task                   Task?                @relation(fields: [taskId], references: [id], onDelete: SetNull)
 
-  @@index([repositoryId, committedAt])
+  @@index([repositoryConnectionId, committedAt])
+  @@index([projectId, committedAt])
+  @@index([projectId, matchedTaskCode])
   @@index([taskId])
+}
+
+model TaskActivityLog {
+  id         String             @id @default(cuid())
+  taskId     String
+  actorId    String
+  actionType TaskActivityAction
+  metadata   Json?
+  createdAt  DateTime           @default(now())
+  task       Task               @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actor      User               @relation(fields: [actorId], references: [id])
+
+  @@index([taskId, createdAt])
+  @@index([actorId])
 }
