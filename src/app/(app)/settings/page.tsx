@@ -1,17 +1,19 @@
+import { EmptyState } from "@/components/shared/empty-state";
+import { PageHeader } from "@/components/shared/page-header";
+
 export default function SettingsPage() {
   return (
-    <main className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Settings</h1>
-        <p className="text-sm text-slate-600">
-          Halaman ini disiapkan untuk pengaturan akun dan konfigurasi workspace.
-        </p>
-      </div>
-      <section className="rounded-xl border bg-white p-5 shadow-sm">
-        <p className="text-sm text-slate-600">
-          Placeholder sementara untuk pengaturan profil, akses, dan integrasi.
-        </p>
-      </section>
+    <main className="space-y-6">
+      <PageHeader
+        title="Settings"
+        description="Halaman ini disiapkan untuk pengaturan akun dan konfigurasi workspace."
+      />
+
+      <EmptyState
+        eyebrow="Settings"
+        title="Pengaturan profil dan workspace akan muncul di sini."
+        description="Halaman ini akan memuat pengaturan akun, akses, dan integrasi secara bertahap."
+      />
     </main>
   );
 }
