@@ -1,3 +1,7 @@
+import { EmptyState } from "@/components/shared/empty-state";
+import { PageHeader } from "@/components/shared/page-header";
+import { AppButton } from "@/components/ui/app-button";
+
 type ProjectDetailPageProps = {
   params: Promise<{
     projectId: string;
@@ -10,21 +14,23 @@ export default async function ProjectDetailPage({
   const { projectId } = await params;
 
   return (
-    <main className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">
-          Project Detail
-        </h1>
-        <p className="text-sm text-slate-600">
-          Placeholder detail untuk project dengan ID <span>{projectId}</span>.
-        </p>
-      </div>
-      <section className="rounded-xl border bg-white p-5 shadow-sm">
-        <p className="text-sm text-slate-600">
-          Nantinya halaman ini akan menampilkan board, anggota, dan aktivitas
-          project.
-        </p>
-      </section>
+    <main className="space-y-6">
+      <PageHeader
+        eyebrow="Project Detail"
+        title="Project Detail"
+        description={`Halaman ini menyiapkan konteks kerja untuk project dengan ID ${projectId}.`}
+      />
+
+      <EmptyState
+        eyebrow="Board Context"
+        title="Board dan ringkasan project akan muncul di sini."
+        description="Halaman ini akan menampilkan anggota, aktivitas, dan board project dalam satu konteks kerja."
+        action={
+          <AppButton href="/projects" variant="secondary">
+            Kembali ke Projects
+          </AppButton>
+        }
+      />
     </main>
   );
 }
