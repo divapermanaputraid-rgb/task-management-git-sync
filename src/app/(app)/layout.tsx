@@ -1,6 +1,6 @@
-import Link from "next/link";
-
 import { auth } from "@/auth";
+import { AppButton } from "@/components/ui/app-button";
+
 import { AppShellNav } from "./_components/app-shell-nav";
 
 type AppLayoutProps = {
@@ -74,12 +74,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
                   </span>
                 </div>
 
-                <Link
-                  href={quickActionHref}
-                  className="inline-flex items-center justify-center rounded-xl bg-[#f0a832] px-4 py-3 text-sm font-semibold text-[#1a1a1f] transition hover:brightness-105"
-                >
-                  {quickActionLabel}
-                </Link>
+                <AppButton href={quickActionHref}>{quickActionLabel}</AppButton>
 
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-sm font-semibold text-white">
@@ -97,7 +92,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
 
           <main className="flex-1 bg-[#0f1013]">
             <div className="mx-auto w-full max-w-7xl px-5 py-6 lg:px-8 lg:py-8">
-              <div className="rounded-[28px] border border-slate-200 bg-[#f8fafc] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.22)] lg:p-6">
+              <div className="rounded-[28px] border border-white/10 bg-[#131316] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.22)] lg:p-6">
                 {children}
               </div>
             </div>
