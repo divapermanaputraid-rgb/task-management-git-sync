@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation";
 const navigationItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/projects", label: "Projects" },
-  { href: "/my-taks", label: "My Tasks" },
-  { href: "/setting", label: "Setting" },
+  { href: "/my-tasks", label: "My Tasks" },
+  { href: "/settings", label: "Settings" },
 ] as const;
 
 type AppShellNavProps = {
@@ -18,15 +18,17 @@ function isActivePath(pathname: string, href: string) {
   if (pathname === href) {
     return true;
   }
+
   if (href === "/projects" && pathname.startsWith("/projects/")) {
     return true;
   }
+
   return false;
 }
 
 export function AppShellNav({ orientation = "vertical" }: AppShellNavProps) {
   const pathname = usePathname();
-  const isHorizontal = orientation == "horizontal";
+  const isHorizontal = orientation === "horizontal";
 
   return (
     <nav
@@ -48,7 +50,7 @@ export function AppShellNav({ orientation = "vertical" }: AppShellNavProps) {
               isActive
                 ? "border border-[#f0a832]/30 bg-[#f0a832]/12 text-[#f0a832]"
                 : "border border-transparent text-white/58 hover:bg-white/5 hover:text-white",
-            ].join("")}
+            ].join(" ")}
           >
             {item.label}
           </Link>
