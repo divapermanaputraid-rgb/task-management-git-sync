@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --import tsx --test tests/auth-redirects.test.ts",
     "db:generate": "prisma generate",
     "db:seed": "prisma db seed",
     "db:migrate:deploy": "prisma migrate deploy",
