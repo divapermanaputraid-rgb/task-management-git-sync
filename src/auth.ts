@@ -9,6 +9,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { getUserByEmail } from "@/lib/auth/queries";
 import { verifyPassword } from "@/lib/auth/password";
 import { loginSchema } from "@/lib/validations/auth";
+import { logger } from "@/lib/logger";
 
 export const authOptions = {
   session: {
@@ -36,6 +37,12 @@ export const authOptions = {
         const parsed = loginSchema.safeParse(credentials);
 
         if (!parsed.success) {
+          logger.warn("auth.login_failed", {
+            area: "auth",
+            action: "login",
+            result: "rejected",
+            reason: "invalid_login_payload",
+          });
           return null;
         }
 
@@ -43,6 +50,12 @@ export const authOptions = {
         const user = await getUserByEmail(email);
 
         if (!user) {
+          logger.warn("auth.login_failed", {
+            area: "auth",
+            action: "login",
+            result: "rejected",
+            reason: "user_not_found",
+          });
           return null;
         }
 
@@ -52,6 +65,14 @@ export const authOptions = {
         );
 
         if (!isPasswordValid) {
+          logger.warn("auth.login_failed", {
+            area: "auth",
+            action: "login",
+            result: "rejected",
+            reason: "invalid_password",
+            actorUserId: user.id,
+            role: user.role,
+          });
           return null;
         }
 
@@ -80,6 +101,24 @@ export const authOptions = {
           token.role === "PM_ADMIN" || token.role === "DEVELOPER"
             ? token.role
             : "DEVELOPER";
+
+        if (typeof token.id !== "string" || !token.role) {
+          logger.warn("auth.session_unexpected_state", {
+            area: "auth",
+            action: "session",
+            result: "recovered",
+            reason: "missing_token_identity",
+          });
+        }
+
+        if (token.role !== "PM_ADMIN" && token.role !== "DEVELOPER") {
+          logger.warn("auth.session_unexpected_state", {
+            area: "auth",
+            action: "session",
+            result: "recovered",
+            reason: "unknown_role_defaulted",
+          });
+        }
       }
 
       return session;
