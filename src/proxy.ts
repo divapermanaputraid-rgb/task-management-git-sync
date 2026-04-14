@@ -1,11 +1,26 @@
 import { withAuth } from "next-auth/middleware";
+import { logger } from "@/lib/logger";
 
 export default withAuth({
   pages: {
     signIn: "/login",
   },
   callbacks: {
-    authorized: ({ token }) => !!token,
+    authorized: ({ token }) => {
+      const isAuthorized = !!token;
+
+      if (!isAuthorized) {
+        logger.warn("access.unauthorized", {
+          area: "access",
+          action: "middleware_authorized",
+          result: "blocked",
+          reason: "missing_session_token",
+          message: "Request blocked by auth middleware.",
+        });
+      }
+
+      return isAuthorized;
+    },
   },
 });
 
