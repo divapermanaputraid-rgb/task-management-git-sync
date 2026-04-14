@@ -21,6 +21,8 @@ Dokumen ini hanya mencatat alur yang sudah ada di repo saat ini.
 
 1. Pengguna login dan masuk ke shell aplikasi.
 2. Dari navigasi, pengguna membuka halaman `Projects`.
-3. Halaman detail project menerima `projectId` dari route.
-4. Saat ini halaman project masih berupa konteks placeholder yang menyiapkan ruang untuk ringkasan dan board project.
-
+3. Sistem mengambil project aktif berdasarkan role dan membership pengguna.
+4. `PM_ADMIN` melihat semua project aktif.
+5. `DEVELOPER` hanya melihat project aktif yang memang menjadi membership-nya.
+6. Halaman menampilkan ringkasan jumlah project, tugas aktif, dan repository.
+7. Setiap project bisa dibuka ke halaman detail melalui route `/projects/[projectId]`.

@@ -17,4 +17,4 @@ Dokumen ini memakai log berbasis sprint, bukan versioning enterprise.
 - menyiapkan helper redirect login yang aman untuk callback lokal
 - melengkapi dokumentasi operasional repo
 - catch-up unit test hanya untuk helper pure yang stabil
-
+- mengubah `Projects` dari placeholder menjadi browse surface awal berbasis role dan membership
