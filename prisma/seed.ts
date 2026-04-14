@@ -2,6 +2,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { logger } from "../src/lib/logger";
 
 const seedUser = [
   {
@@ -42,6 +43,7 @@ const prisma = new PrismaClient({
 async function main() {
   const seedDefaultPassword = requireEnv("SEED_DEFAULT_PASSWORD");
   const passwordHash = await bcrypt.hash(seedDefaultPassword, 10);
+
   for (const user of seedUser) {
     await prisma.user.upsert({
       where: {
@@ -61,13 +63,23 @@ async function main() {
     });
   }
 
-  console.log("Seed auth baseline berhasil dibuat.");
+  logger.info("seed.completed", {
+    area: "seed",
+    action: "auth_baseline",
+    result: "success",
+    message: "Seed auth baseline berhasil dibuat.",
+  });
 }
 
 main()
   .catch((error) => {
-    console.error("Seed gagal dijalankan.");
-    console.error(error);
+    logger.error("seed.failed", {
+      area: "seed",
+      action: "auth_baseline",
+      result: "failed",
+      reason: "database_or_seed_error",
+      message: error instanceof Error ? error.message : "unknown_error",
+    });
     process.exit(1);
   })
   .finally(async () => {
