@@ -1,9 +1,11 @@
+// src/app/(auth)/login/_components/login-form.tsx
 "use client";
 
 import { useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { AppButton } from "@/components/ui/app-button";
 import { getSafeCallbackUrl } from "@/lib/auth/redirects";
 
 export function LoginForm() {
@@ -15,7 +17,8 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl")) || "/";
+  const callbackUrl =
+    getSafeCallbackUrl(searchParams.get("callbackUrl")) || "/";
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -47,7 +50,7 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium">
+        <label htmlFor="email" className="text-sm font-medium text-foreground">
           Email
         </label>
         <input
@@ -56,14 +59,17 @@ export function LoginForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="nama@perusahaan.com"
-          className="w-full rounded-lg border px-3 py-2 text-sm outline-none ring-0"
+          className="w-full rounded-xl border border-border bg-surface-soft px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted focus:border-accent/40"
           autoComplete="email"
           disabled={isPending}
         />
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-medium">
+        <label
+          htmlFor="password"
+          className="text-sm font-medium text-foreground"
+        >
           Password
         </label>
         <input
@@ -72,23 +78,19 @@ export function LoginForm() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Masukkan password Anda."
-          className="w-full rounded-lg border px-3 py-2 text-sm outline-none ring-0"
+          className="w-full rounded-xl border border-border bg-surface-soft px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted focus:border-accent/40"
           autoComplete="current-password"
           disabled={isPending}
         />
       </div>
 
       {errorMessage ? (
-        <p className="text-sm text-red-600">{errorMessage}</p>
+        <p className="text-sm text-rose-400">{errorMessage}</p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="w-full rounded-lg bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-      >
+      <AppButton type="submit" className="w-full" disabled={isPending}>
         {isPending ? "Sedang masuk..." : "Masuk"}
-      </button>
+      </AppButton>
     </form>
   );
 }
