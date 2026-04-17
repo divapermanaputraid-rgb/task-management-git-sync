@@ -2,6 +2,9 @@ import { prisma } from "@/lib/db/prisma";
 
 type ProjectViewerRole = "PM_ADMIN" | "DEVELOPER";
 
+export type ProjectBrowseStatus = "ACTIVE" | "ARCHIVED" | "ALL";
+export type ProjectBrowseScope = "ALL" | "OWNED";
+
 export type VisibleProjectSummary = {
   id: string;
   name: string;
@@ -21,36 +24,79 @@ export type VisibleProjectSummary = {
 type GetVisibleProjectsParams = {
   userId: string;
   role: ProjectViewerRole;
+  filters?: {
+    status?: ProjectBrowseStatus;
+    scope?: ProjectBrowseScope;
+    query?: string;
+  };
 };
 
 export async function getVisibleProjects({
   userId,
   role,
+  filters,
 }: GetVisibleProjectsParams): Promise<VisibleProjectSummary[]> {
-  const where =
-    role === "PM_ADMIN"
-      ? {
-          status: "ACTIVE" as const,
-        }
-      : {
-          status: "ACTIVE" as const,
-          members: {
-            some: {
-              userId,
-            },
-          },
-        };
+  const statusFilter = filters?.status ?? "ACTIVE";
+  const scopeFilter = filters?.scope ?? "ALL";
+  const queryFilter = filters?.query?.trim() ?? "";
 
   const projects = await prisma.project.findMany({
-    where,
-    orderBy: [
-      {
-        updatedAt: "desc",
-      },
-      {
-        name: "asc",
-      },
-    ],
+    where: {
+      ...(statusFilter !== "ALL" ? { status: statusFilter } : {}),
+      ...(role === "DEVELOPER"
+        ? {
+            members: {
+              some: {
+                userId,
+              },
+            },
+          }
+        : {}),
+      ...(role === "PM_ADMIN" && scopeFilter === "OWNED"
+        ? {
+            createdById: userId,
+          }
+        : {}),
+      ...(queryFilter
+        ? {
+            OR: [
+              {
+                name: {
+                  contains: queryFilter,
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                description: {
+                  contains: queryFilter,
+                  mode: "insensitive" as const,
+                },
+              },
+            ],
+          }
+        : {}),
+    },
+    orderBy:
+      statusFilter === "ALL"
+        ? [
+            {
+              status: "asc" as const,
+            },
+            {
+              updatedAt: "desc" as const,
+            },
+            {
+              name: "asc" as const,
+            },
+          ]
+        : [
+            {
+              updatedAt: "desc" as const,
+            },
+            {
+              name: "asc" as const,
+            },
+          ],
     select: {
       id: true,
       name: true,
