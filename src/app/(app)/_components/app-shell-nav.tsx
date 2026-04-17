@@ -48,8 +48,8 @@ export function AppShellNav({ orientation = "vertical" }: AppShellNavProps) {
               "rounded-xl px-3 py-2 text-sm font-medium transition",
               isHorizontal ? "whitespace-nowrap" : "",
               isActive
-                ? "border border-[#f0a832]/30 bg-[#f0a832]/12 text-[#f0a832]"
-                : "border border-transparent text-white/58 hover:bg-white/5 hover:text-white",
+                ? "border border-accent/30 bg-accent/12 text-accent"
+                : "border border-transparent text-muted hover:bg-surface-soft hover:text-foreground",
             ].join(" ")}
           >
             {item.label}

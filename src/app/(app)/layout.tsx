@@ -19,31 +19,33 @@ export default async function AppLayout({ children }: AppLayoutProps) {
     session?.user.role === "PM_ADMIN" ? "Buka Projects" : "Buka My Tasks";
 
   return (
-    <div className="min-h-screen bg-[#0c0c0e] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="flex min-h-screen">
-        <aside className="hidden w-64 shrink-0 border-r border-white/10 bg-[#131316] lg:flex lg:flex-col">
-          <div className="border-b border-white/10 px-6 py-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">
+        <aside className="hidden w-64 shrink-0 border-r border-border bg-surface lg:flex lg:flex-col">
+          <div className="border-b border-border px-6 py-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
               Internal Task Management
             </p>
-            <h1 className="mt-3 text-xl font-semibold text-white">Workspace</h1>
-            <p className="mt-2 text-sm leading-6 text-white/58">
+            <h1 className="mt-3 text-xl font-semibold text-foreground">
+              Workspace
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-muted">
               Satu shell untuk dashboard, project, tugas, dan pengaturan.
             </p>
           </div>
 
           <div className="flex-1 px-4 py-6">
-            <p className="mb-3 px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/30">
+            <p className="mb-3 px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
               Navigation
             </p>
             <AppShellNav />
           </div>
 
-          <div className="border-t border-white/10 px-6 py-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/30">
+          <div className="border-t border-border px-6 py-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
               Default Surface
             </p>
-            <p className="mt-2 text-sm text-white/68">
+            <p className="mt-2 text-sm text-muted-strong">
               {session?.user.role === "PM_ADMIN"
                 ? "PM/Admin masuk ke Dashboard."
                 : "Developer masuk ke My Tasks."}
@@ -52,21 +54,21 @@ export default async function AppLayout({ children }: AppLayoutProps) {
         </aside>
 
         <div className="flex min-h-screen flex-1 flex-col">
-          <header className="border-b border-white/10 bg-[#131316]">
+          <header className="border-b border-border bg-surface">
             <div className="flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-8">
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                   App Shell
                 </p>
-                <p className="mt-1 text-sm text-white/62">
+                <p className="mt-1 text-sm text-muted-strong">
                   Gunakan shell ini untuk semua halaman internal yang sudah
                   diautentikasi.
                 </p>
               </div>
 
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-                <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/50 lg:min-w-[280px]">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/28">
+                <div className="flex items-center gap-3 rounded-xl border border-border bg-surface-soft px-4 py-3 text-sm text-muted lg:min-w-[280px]">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                     Search
                   </span>
                   <span className="truncate">
@@ -76,23 +78,23 @@ export default async function AppLayout({ children }: AppLayoutProps) {
 
                 <AppButton href={quickActionHref}>{quickActionLabel}</AppButton>
 
-                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                  <p className="text-sm font-semibold text-white">
+                <div className="rounded-xl border border-border bg-surface-soft px-4 py-3">
+                  <p className="text-sm font-semibold text-foreground">
                     {displayName}
                   </p>
-                  <p className="text-xs text-white/52">{roleLabel}</p>
+                  <p className="text-xs text-muted">{roleLabel}</p>
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-white/5 px-5 py-3 lg:hidden">
+            <div className="border-t border-border-soft px-5 py-3 lg:hidden">
               <AppShellNav orientation="horizontal" />
             </div>
           </header>
 
-          <main className="flex-1 bg-[#0f1013]">
+          <main className="flex-1 bg-surface-soft">
             <div className="mx-auto w-full max-w-7xl px-5 py-6 lg:px-8 lg:py-8">
-              <div className="rounded-[28px] border border-white/10 bg-[#131316] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.22)] lg:p-6">
+              <div className="rounded-[28px] border border-border bg-surface p-5 shadow-[0_24px_60px_rgba(0,0,0,0.22)] lg:p-6">
                 {children}
               </div>
             </div>

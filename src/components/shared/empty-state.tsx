@@ -19,14 +19,14 @@ export function EmptyState({
     <AppSurface>
       <div className="max-w-2xl space-y-3">
         {eyebrow ? (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
             {eyebrow}
           </p>
         ) : null}
 
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
-          <p className="text-sm leading-6 text-white/58">{description}</p>
+          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+          <p className="text-sm leading-6 text-muted">{description}</p>
         </div>
 
         {action ? <div className="pt-1">{action}</div> : null}

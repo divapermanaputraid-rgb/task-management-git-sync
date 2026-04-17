@@ -17,14 +17,14 @@ export function PageHeader({
     <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div className="space-y-2">
         {eyebrow ? (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/38">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
             {eyebrow}
           </p>
         ) : null}
 
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold text-white">{title}</h1>
-          <p className="max-w-2xl text-sm leading-6 text-white/58">
+          <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
+          <p className="max-w-2xl text-sm leading-6 text-muted">
             {description}
           </p>
         </div>

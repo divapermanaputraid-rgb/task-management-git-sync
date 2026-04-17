@@ -19,11 +19,11 @@ type AppButtonElementProps = AppButtonBaseProps &
 function getButtonClasses(variant: AppButtonVariant, className?: string) {
   const variantClasses = {
     primary:
-      "bg-[#f0a832] text-[#1a1a1f] hover:brightness-105 focus-visible:ring-[#f0a832]/40",
+      "bg-accent text-accent-foreground hover:brightness-105 focus-visible:ring-ring",
     secondary:
-      "border border-white/10 bg-[#222228] text-white/88 hover:bg-[#28282f] focus-visible:ring-white/20",
+      "border border-border bg-surface-elevated text-foreground hover:bg-surface-soft focus-visible:ring-ring",
     ghost:
-      "border border-transparent bg-transparent text-white/58 hover:bg-white/5 hover:text-white focus-visible:ring-white/20",
+      "border border-transparent bg-transparent text-muted hover:bg-surface-soft hover:text-foreground focus-visible:ring-ring",
   };
 
   return [
@@ -52,8 +52,6 @@ export function AppButton(props: AppButtonLinkProps | AppButtonElementProps) {
   const {
     children,
     type = "button",
-    variant: _variant,
-    className: _className,
     ...buttonProps
   } = props;
 
