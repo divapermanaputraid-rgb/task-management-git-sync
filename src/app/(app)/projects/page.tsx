@@ -3,22 +3,90 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
+import { AppButton } from "@/components/ui/app-button";
 import { AppSurface } from "@/components/ui/app-surface";
 import { StatusPill } from "@/components/ui/status-pill";
-import { getVisibleProjects } from "@/lib/projects/queries";
+import {
+  getVisibleProjects,
+  type ProjectBrowseScope,
+  type ProjectBrowseStatus,
+} from "@/lib/projects/queries";
 
 import { ProjectCard } from "./_components/project-card";
+import { ProjectsFilters } from "./_components/projects-filters";
 
-export default async function ProjectsPage() {
+type ProjectsPageSearchParams = {
+  q?: string | string[];
+  status?: string | string[];
+  scope?: string | string[];
+};
+
+type ProjectsPageProps = {
+  searchParams: Promise<ProjectsPageSearchParams>;
+};
+
+function getSingleSearchParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function getStatusFilter(
+  value: string | string[] | undefined,
+): ProjectBrowseStatus {
+  const normalizedValue = getSingleSearchParam(value)?.toLowerCase();
+
+  if (normalizedValue === "archived") {
+    return "ARCHIVED";
+  }
+
+  if (normalizedValue === "all") {
+    return "ALL";
+  }
+
+  return "ACTIVE";
+}
+
+function getScopeFilter(
+  value: string | string[] | undefined,
+  role: "PM_ADMIN" | "DEVELOPER",
+): ProjectBrowseScope {
+  if (role !== "PM_ADMIN") {
+    return "ALL";
+  }
+
+  return getSingleSearchParam(value)?.toLowerCase() === "owned"
+    ? "OWNED"
+    : "ALL";
+}
+
+function getQueryFilter(value: string | string[] | undefined) {
+  return getSingleSearchParam(value)?.trim() ?? "";
+}
+
+export default async function ProjectsPage({
+  searchParams,
+}: ProjectsPageProps) {
   const session = await auth();
 
   if (!session?.user) {
     redirect("/login");
   }
 
+  const currentSearchParams = await searchParams;
+  const statusFilter = getStatusFilter(currentSearchParams.status);
+  const scopeFilter = getScopeFilter(
+    currentSearchParams.scope,
+    session.user.role,
+  );
+  const queryFilter = getQueryFilter(currentSearchParams.q);
+
   const projects = await getVisibleProjects({
     userId: session.user.id,
     role: session.user.role,
+    filters: {
+      status: statusFilter,
+      scope: scopeFilter,
+      query: queryFilter,
+    },
   });
 
   const totalActiveTasks = projects.reduce(
@@ -34,23 +102,55 @@ export default async function ProjectsPage() {
     session.user.role === "PM_ADMIN" ? "PM/Admin" : "Membership";
   const viewTone = session.user.role === "PM_ADMIN" ? "warning" : "info";
 
+  const projectCountLabel =
+    statusFilter === "ARCHIVED"
+      ? "Project Arsip"
+      : statusFilter === "ALL"
+        ? "Project Terlihat"
+        : "Project Aktif";
+
+  const projectCountDescription =
+    statusFilter === "ARCHIVED"
+      ? "Daftar arsip mengikuti filter yang sedang aktif."
+      : statusFilter === "ALL"
+        ? "Daftar ini memuat project aktif dan arsip."
+        : "Daftar aktif ditampilkan secara default.";
+
+  const hasActiveFilters =
+    queryFilter.length > 0 ||
+    statusFilter !== "ACTIVE" ||
+    (session.user.role === "PM_ADMIN" && scopeFilter === "OWNED");
+
   return (
     <main className="space-y-6">
       <PageHeader
         title="Projects"
-        description="Halaman ini menampilkan project aktif yang bisa Anda pantau dari satu tempat."
-        action={<StatusPill tone={viewTone}>{viewLabel}</StatusPill>}
+        description="Halaman ini menampilkan project yang bisa Anda telusuri dari satu surface kerja."
+        action={
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <StatusPill tone={viewTone}>{viewLabel}</StatusPill>
+            {session.user.role === "PM_ADMIN" ? (
+              <AppButton href="/projects/new">Buat Project</AppButton>
+            ) : null}
+          </div>
+        }
+      />
+
+      <ProjectsFilters
+        role={session.user.role}
+        query={queryFilter}
+        status={statusFilter}
+        scope={scopeFilter}
+        resultCount={projects.length}
       />
 
       <section className="grid gap-4 md:grid-cols-3">
         <AppSurface className="space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/35">
-            Project Aktif
+            {projectCountLabel}
           </p>
           <p className="text-2xl font-semibold text-white">{projects.length}</p>
-          <p className="text-sm text-white/58">
-            Daftar aktif ditampilkan secara default.
-          </p>
+          <p className="text-sm text-white/58">{projectCountDescription}</p>
         </AppSurface>
 
         <AppSurface className="space-y-1">
@@ -82,14 +182,25 @@ export default async function ProjectsPage() {
         <EmptyState
           eyebrow="Projects"
           title={
-            session.user.role === "PM_ADMIN"
-              ? "Belum ada project aktif."
-              : "Anda belum tergabung ke project aktif."
+            hasActiveFilters
+              ? "Tidak ada project yang cocok dengan filter ini."
+              : session.user.role === "PM_ADMIN"
+                ? "Belum ada project aktif."
+                : "Anda belum tergabung ke project aktif."
           }
           description={
-            session.user.role === "PM_ADMIN"
-              ? "Halaman ini akan menampilkan ringkasan progres dan akses ke detail project saat data sudah tersedia."
-              : "Halaman ini akan menampilkan project aktif yang memang menjadi membership Anda."
+            hasActiveFilters
+              ? "Ubah filter atau reset tampilan untuk melihat daftar project lain."
+              : session.user.role === "PM_ADMIN"
+                ? "Halaman ini akan menampilkan ringkasan progres dan akses ke detail project saat data sudah tersedia."
+                : "Halaman ini akan menampilkan project aktif yang memang menjadi membership Anda."
+          }
+          action={
+            hasActiveFilters ? (
+              <AppButton href="/projects" variant="secondary">
+                Reset Filter
+              </AppButton>
+            ) : undefined
           }
         />
       ) : (
