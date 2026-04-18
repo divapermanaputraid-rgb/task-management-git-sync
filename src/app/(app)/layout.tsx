@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
+
 import { auth } from "@/auth";
 import { AppButton } from "@/components/ui/app-button";
+
 import { AppShellNav } from "./_components/app-shell-nav";
-import React from "react";
 
 type AppLayoutProps = {
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 export default async function AppLayout({ children }: AppLayoutProps) {
@@ -18,7 +20,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
   const displayName = session.user.name ?? session.user.email ?? "User";
   const roleLabel = session.user.role === "PM_ADMIN" ? "PM/Admin" : "Developer";
   const quickActionHref =
-    session.user.role === "PM_ADMIN" ? "/project" : "/my-tasks";
+    session.user.role === "PM_ADMIN" ? "/projects" : "/my-tasks";
   const quickActionLabel =
     session.user.role === "PM_ADMIN" ? "Buka Projects" : "Buka My Tasks";
 

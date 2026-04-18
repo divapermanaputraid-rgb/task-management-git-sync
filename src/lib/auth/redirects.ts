@@ -26,14 +26,15 @@ export function getSafeCallbackUrl(callbackUrl?: string | string[] | null) {
 
   return `${normalizedCallbackUrl.pathname}${normalizedCallbackUrl.search}${normalizedCallbackUrl.hash}`;
 }
-export function getLoginRedirectUrl(callbackUrl?: string | string[] | null) {
-  const SafeCallbackUrl = getSafeCallbackUrl(callbackUrl);
 
-  if (!SafeCallbackUrl) {
+export function getLoginRedirectUrl(callbackUrl?: string | string[] | null) {
+  const safeCallbackUrl = getSafeCallbackUrl(callbackUrl);
+
+  if (!safeCallbackUrl) {
     return "/login";
   }
 
-  return `/login?callbackUrl=${encodeURIComponent(SafeCallbackUrl)}`;
+  return `/login?callbackUrl=${encodeURIComponent(safeCallbackUrl)}`;
 }
 
 export function getPostLoginRedirect(

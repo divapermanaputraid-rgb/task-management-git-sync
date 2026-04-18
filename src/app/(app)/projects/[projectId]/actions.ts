@@ -10,7 +10,7 @@ import { logger } from "@/lib/logger";
 import { canArchiveProject } from "@/lib/Permission";
 import { toggleProjectArchiveSchema } from "@/lib/validations/project";
 
-export async function serProjectArchivedStateAction(
+export async function setProjectArchiveStateAction(
   formData: FormData,
 ): Promise<void> {
   const rawProjectId = formData.get("projectId");
@@ -22,6 +22,7 @@ export async function serProjectArchivedStateAction(
       getLoginRedirectUrl(projectId ? `/projects/${projectId}` : "/projects"),
     );
   }
+
   if (!canArchiveProject(session.user.role)) {
     redirect("/projects");
   }
@@ -30,9 +31,11 @@ export async function serProjectArchivedStateAction(
     projectId: rawProjectId,
     nextStatus: formData.get("nextStatus"),
   });
+
   if (!parsed.success) {
     redirect("/projects");
   }
+
   const { projectId: parsedProjectId, nextStatus } = parsed.data;
   const actorUserId = session.user.id;
   let currentProject: { id: string; status: "ACTIVE" | "ARCHIVED" } | null =
@@ -49,25 +52,28 @@ export async function serProjectArchivedStateAction(
       },
     });
   } catch (error) {
-    logger.error("project.archived_lookup_failed", {
+    logger.error("project.archive_lookup_failed", {
       area: "projects",
-      action: "set_project_archived_state",
+      action: "set_project_archive_state",
       result: "failed",
       actorUserId,
       projectId: parsedProjectId,
       message: error instanceof Error ? error.message : "unknown_error",
     });
+
     redirect(`/projects/${parsedProjectId}`);
   }
+
   if (!currentProject) {
     logger.warn("project.archive_missing", {
       area: "projects",
-      action: "set_project_archived_state",
+      action: "set_project_archive_state",
       result: "rejected",
       actorUserId,
       projectId: parsedProjectId,
       reason: "project_not_found",
     });
+
     redirect("/projects");
   }
 
@@ -81,11 +87,12 @@ export async function serProjectArchivedStateAction(
           status: nextStatus,
         },
       });
+
       logger.info(
         nextStatus === "ARCHIVED" ? "project.archived" : "project.unarchived",
         {
           area: "projects",
-          action: "set_project_archived_state",
+          action: "set_project_archive_state",
           result: "succeeded",
           actorUserId,
           projectId: parsedProjectId,
@@ -94,15 +101,16 @@ export async function serProjectArchivedStateAction(
       );
     }
   } catch (error) {
-    logger.error("project.archived_failed", {
+    logger.error("project.archive_failed", {
       area: "projects",
-      action: "set_project_archived_state",
+      action: "set_project_archive_state",
       result: "failed",
       actorUserId,
       projectId: parsedProjectId,
       message: error instanceof Error ? error.message : "unknown_error",
     });
   }
+
   revalidatePath("/projects");
   revalidatePath(`/projects/${parsedProjectId}`);
   redirect(`/projects/${parsedProjectId}`);
