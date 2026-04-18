@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-
+import { getLoginRedirectUrl } from "@/lib/auth/redirects";
 import { auth } from "@/auth";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
@@ -68,7 +68,7 @@ export default async function ProjectsPage({
   const session = await auth();
 
   if (!session?.user) {
-    redirect("/login");
+    redirect(getLoginRedirectUrl("/projects"));
   }
 
   const currentSearchParams = await searchParams;

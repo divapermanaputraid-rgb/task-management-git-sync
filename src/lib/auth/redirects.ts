@@ -26,6 +26,15 @@ export function getSafeCallbackUrl(callbackUrl?: string | string[] | null) {
 
   return `${normalizedCallbackUrl.pathname}${normalizedCallbackUrl.search}${normalizedCallbackUrl.hash}`;
 }
+export function getLoginRedirectUrl(callbackUrl?: string | string[] | null) {
+  const SafeCallbackUrl = getSafeCallbackUrl(callbackUrl);
+
+  if (!SafeCallbackUrl) {
+    return "/login";
+  }
+
+  return `/login?callbackUrl=${encodeURIComponent(SafeCallbackUrl)}`;
+}
 
 export function getPostLoginRedirect(
   role: keyof typeof defaultAppRoutes,

@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { logger } from "@/lib/logger";
+import { getLoginRedirectUrl } from "@/lib/auth/redirects";
 import { canCreateProject } from "@/lib/Permission";
 import { createProjectSchema } from "@/lib/validations/project";
 
@@ -20,7 +21,7 @@ export async function createProjectAction(
   const session = await auth();
 
   if (!session?.user) {
-    redirect("/login");
+    redirect(getLoginRedirectUrl("/projects/new"));
   }
 
   if (!canCreateProject(session.user.role)) {

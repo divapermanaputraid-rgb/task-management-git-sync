@@ -1,7 +1,8 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AppButton } from "@/components/ui/app-button";
-
 import { AppShellNav } from "./_components/app-shell-nav";
+import React from "react";
 
 type AppLayoutProps = {
   children: React.ReactNode;
@@ -10,13 +11,16 @@ type AppLayoutProps = {
 export default async function AppLayout({ children }: AppLayoutProps) {
   const session = await auth();
 
-  const displayName = session?.user.name ?? session?.user.email ?? "User";
-  const roleLabel =
-    session?.user.role === "PM_ADMIN" ? "PM/Admin" : "Developer";
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  const displayName = session.user.name ?? session.user.email ?? "User";
+  const roleLabel = session.user.role === "PM_ADMIN" ? "PM/Admin" : "Developer";
   const quickActionHref =
-    session?.user.role === "PM_ADMIN" ? "/projects" : "/my-tasks";
+    session.user.role === "PM_ADMIN" ? "/project" : "/my-tasks";
   const quickActionLabel =
-    session?.user.role === "PM_ADMIN" ? "Buka Projects" : "Buka My Tasks";
+    session.user.role === "PM_ADMIN" ? "Buka Projects" : "Buka My Tasks";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -46,7 +50,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
               Default Surface
             </p>
             <p className="mt-2 text-sm text-muted-strong">
-              {session?.user.role === "PM_ADMIN"
+              {session.user.role === "PM_ADMIN"
                 ? "PM/Admin masuk ke Dashboard."
                 : "Developer masuk ke My Tasks."}
             </p>
