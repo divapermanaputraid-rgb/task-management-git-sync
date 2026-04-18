@@ -40,6 +40,8 @@ function formatTimeline(startDate: Date | null, endDate: Date | null) {
 export function ProjectCard({ project }: ProjectCardProps) {
   const statusLabel = project.status === "ACTIVE" ? "Aktif" : "Arsip";
   const statusTone = project.status === "ACTIVE" ? "success" : "neutral";
+  const detailActionLabel =
+    project.status === "ARCHIVED" ? "Buka Read-only" : "Buka Detail";
 
   return (
     <AppSurface className="flex h-full flex-col gap-5">
@@ -54,6 +56,11 @@ export function ProjectCard({ project }: ProjectCardProps) {
             <p className="text-sm leading-6 text-white/58">
               {project.description ?? "Project ini belum memiliki deskripsi."}
             </p>
+            {project.status === "ARCHIVED" ? (
+              <p className="text-sm text-white/45">
+                Project arsip hanya bisa dibuka dalam mode baca.
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -132,7 +139,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             variant="secondary"
             className="px-3 py-2"
           >
-            Buka Detail
+            {detailActionLabel}
           </AppButton>
         </div>
       </div>

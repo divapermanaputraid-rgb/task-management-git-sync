@@ -45,3 +45,17 @@ export const createProjectSchema = z
   );
 
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
+
+export const toggleProjectArchiveSchema = z.object({
+  projectId: z
+    .string()
+    .trim()
+    .min(1, "Project tidak valid."),
+  nextStatus: z.enum(["ACTIVE", "ARCHIVED"], {
+    message: "Status project tidak valid.",
+  }),
+});
+
+export type ToggleProjectArchiveInput = z.infer<
+  typeof toggleProjectArchiveSchema
+>;
