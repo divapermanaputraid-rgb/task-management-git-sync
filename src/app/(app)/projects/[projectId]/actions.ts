@@ -23,7 +23,43 @@ export async function setProjectArchiveStateAction(
     );
   }
 
-  if (!canArchiveProject(session.user.role)) {
+  const actorUserId = session.user.id;
+  const actor = await prisma.user.findUnique({
+    where: {
+      id: actorUserId,
+    },
+    select: {
+      id: true,
+      role: true,
+    },
+  });
+
+  if (!actor) {
+    logger.warn("project.archive_session_invalid", {
+      area: "projects",
+      action: "set_project_archive_state",
+      result: "rejected",
+      actorUserId,
+      projectId: projectId || null,
+      reason: "user_not_found",
+    });
+
+    redirect(
+      getLoginRedirectUrl(projectId ? `/projects/${projectId}` : "/projects"),
+    );
+  }
+
+  if (!canArchiveProject(actor.role)) {
+    logger.warn("project.archive_forbidden", {
+      area: "projects",
+      action: "set_project_archive_state",
+      result: "rejected",
+      actorUserId: actor.id,
+      role: actor.role,
+      projectId: projectId || null,
+      reason: "insufficient_role",
+    });
+
     redirect("/projects");
   }
 
@@ -33,11 +69,20 @@ export async function setProjectArchiveStateAction(
   });
 
   if (!parsed.success) {
+    logger.warn("project.archive_invalid_payload", {
+      area: "projects",
+      action: "set_project_archive_state",
+      result: "rejected",
+      actorUserId: actor.id,
+      role: actor.role,
+      projectId: projectId || null,
+      reason: "invalid_payload",
+    });
+
     redirect("/projects");
   }
 
   const { projectId: parsedProjectId, nextStatus } = parsed.data;
-  const actorUserId = session.user.id;
   let currentProject: { id: string; status: "ACTIVE" | "ARCHIVED" } | null =
     null;
 
@@ -56,7 +101,8 @@ export async function setProjectArchiveStateAction(
       area: "projects",
       action: "set_project_archive_state",
       result: "failed",
-      actorUserId,
+      actorUserId: actor.id,
+      role: actor.role,
       projectId: parsedProjectId,
       message: error instanceof Error ? error.message : "unknown_error",
     });
@@ -69,7 +115,8 @@ export async function setProjectArchiveStateAction(
       area: "projects",
       action: "set_project_archive_state",
       result: "rejected",
-      actorUserId,
+      actorUserId: actor.id,
+      role: actor.role,
       projectId: parsedProjectId,
       reason: "project_not_found",
     });
@@ -94,7 +141,8 @@ export async function setProjectArchiveStateAction(
           area: "projects",
           action: "set_project_archive_state",
           result: "succeeded",
-          actorUserId,
+          actorUserId: actor.id,
+          role: actor.role,
           projectId: parsedProjectId,
           nextStatus,
         },
@@ -105,7 +153,8 @@ export async function setProjectArchiveStateAction(
       area: "projects",
       action: "set_project_archive_state",
       result: "failed",
-      actorUserId,
+      actorUserId: actor.id,
+      role: actor.role,
       projectId: parsedProjectId,
       message: error instanceof Error ? error.message : "unknown_error",
     });

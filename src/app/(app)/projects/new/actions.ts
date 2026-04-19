@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { Prisma } from "@/generated/prisma/client";
+import { getLoginRedirectUrl } from "@/lib/auth/redirects";
 import { prisma } from "@/lib/db/prisma";
 import { logger } from "@/lib/logger";
-import { getLoginRedirectUrl } from "@/lib/auth/redirects";
 import { canCreateProject } from "@/lib/Permission";
 import { createProjectSchema } from "@/lib/validations/project";
 
@@ -24,7 +24,41 @@ export async function createProjectAction(
     redirect(getLoginRedirectUrl("/projects/new"));
   }
 
-  if (!canCreateProject(session.user.role)) {
+  const actorUserId = session.user.id;
+  const actor = await prisma.user.findUnique({
+    where: {
+      id: actorUserId,
+    },
+    select: {
+      id: true,
+      role: true,
+    },
+  });
+
+  if (!actor) {
+    logger.warn("project.create_session_invalid", {
+      area: "projects",
+      action: "create_project",
+      result: "rejected",
+      actorUserId,
+      reason: "user_not_found",
+    });
+
+    return {
+      errorMessage: "Sesi login tidak valid. Silakan login ulang.",
+    };
+  }
+
+  if (!canCreateProject(actor.role)) {
+    logger.warn("project.create_forbidden", {
+      area: "projects",
+      action: "create_project",
+      result: "rejected",
+      actorUserId: actor.id,
+      role: actor.role,
+      reason: "insufficient_role",
+    });
+
     return {
       errorMessage: "Anda tidak punya akses untuk membuat project.",
     };
@@ -44,29 +78,9 @@ export async function createProjectAction(
     };
   }
 
-  const actorUserId = session.user.id;
   let createdProjectId: string | null = null;
 
   try {
-    const currentUser = await prisma.user.findUnique({
-      where: { id: actorUserId },
-      select: { id: true },
-    });
-
-    if (!currentUser) {
-      logger.warn("project.create_session_invalid", {
-        area: "projects",
-        action: "create_project",
-        result: "rejected",
-        actorUserId,
-        reason: "user_not_found",
-      });
-
-      return {
-        errorMessage: "Sesi login tidak valid. Silakan login ulang.",
-      };
-    }
-
     const project = await prisma.project.create({
       data: {
         name: parsed.data.name,
@@ -75,7 +89,7 @@ export async function createProjectAction(
           ? new Date(parsed.data.startDate)
           : null,
         endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : null,
-        createdById: currentUser.id,
+        createdById: actor.id,
       },
       select: {
         id: true,
@@ -86,8 +100,11 @@ export async function createProjectAction(
       area: "projects",
       action: "create_project",
       result: "succeeded",
-      actorUserId: currentUser.id,
+      actorUserId: actor.id,
+      role: actor.role,
+      projectId: project.id,
     });
+
     createdProjectId = project.id;
   } catch (error) {
     if (
@@ -98,7 +115,8 @@ export async function createProjectAction(
         area: "projects",
         action: "create_project",
         result: "rejected",
-        actorUserId,
+        actorUserId: actor.id,
+        role: actor.role,
         reason: "foreign_key_constraint",
       });
 
@@ -111,7 +129,8 @@ export async function createProjectAction(
       area: "projects",
       action: "create_project",
       result: "failed",
-      actorUserId,
+      actorUserId: actor.id,
+      role: actor.role,
       message: error instanceof Error ? error.message : "unknown_error",
     });
 
