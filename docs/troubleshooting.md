@@ -29,6 +29,27 @@ Panduan singkat untuk masalah yang paling mungkin muncul di repo ini.
 - pastikan `NEXTAUTH_URL` sesuai URL lokal
 - pastikan user seed sudah dibuat sebelum login
 - jika login berhasil tetapi redirect salah, cek callback URL yang masuk dan pastikan masih path lokal
+- jika verifikasi unauthenticated flow terasa aneh di browser biasa, gunakan incognito karena logout UI belum tersedia
+
+## Route Protection Issues
+
+- jika route internal masih bisa terbuka tanpa login, cek `src/proxy.ts` dan `src/app/(app)/layout.tsx`
+- jika pengguna diarahkan ke login tetapi route asal hilang, cek helper di `src/lib/auth/redirects.ts`
+- jika shell internal sempat tampil tanpa session, cek fallback auth gate di layout grup `(app)`
+
+## Permission Issues
+
+- jika `DEVELOPER` terlihat ditolak di UI tetapi masih bisa memicu mutasi, cek server action terkait dan pastikan role diverifikasi di backend
+- untuk create project, log reject yang diharapkan adalah `project.create_forbidden`
+- untuk archive atau unarchive project, log reject yang diharapkan adalah `project.archive_forbidden`
+- jika actor session tidak lagi valid di database, log reject yang bisa muncul adalah `project.create_session_invalid` atau `project.archive_session_invalid`
+
+## Verification Issues
+
+- gunakan `npm test` untuk helper auth redirect yang sudah punya unit test
+- gunakan `npm run lint` untuk memastikan perubahan tetap bersih
+- untuk negative test permission, copy request sukses dari Network browser lalu replay saat login sebagai `DEVELOPER`
+- hasil yang benar adalah mutasi gagal dan log backend mencatat reject permission
 
 ## Database Connection Issues
 
@@ -36,3 +57,7 @@ Panduan singkat untuk masalah yang paling mungkin muncul di repo ini.
 - pastikan jaringan atau firewall mengizinkan koneksi ke database
 - jika koneksi ke pooler gagal, coba validasi ulang string koneksi dan SSL mode
 
+## Next.js Dev Issues
+
+- jika `next dev` melaporkan port sudah dipakai, pakai proses yang sudah hidup atau matikan proses lama lalu jalankan ulang
+- warning multiple lockfiles dari Turbopack bukan blocker aplikasi, tetapi sebaiknya dirapikan nanti dengan `turbopack.root` atau membersihkan lockfile yang tidak relevan
