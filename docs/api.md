@@ -76,9 +76,22 @@ Repo ini saat ini juga memakai Next.js Server Actions untuk mutasi internal. Jal
 - auth: wajib session valid
 - permission: hanya `PM_ADMIN`
 - enforcement: actor diambil dari session lalu role actor dimuat ulang dari database sebelum mutasi dijalankan
+- validation:
+  - server hanya membaca field `projectId` dan `nextStatus`
+  - validasi shape payload memakai `toggleProjectArchiveSchema` di `src/lib/validations/project.ts`
+  - status project saat ini dimuat ulang dari database lalu divalidasi lagi dengan helper transisi di `src/lib/projects/archive.ts`
+  - transisi dengan status lama yang sama ditolak sebelum write database dijalankan
+  - update status memakai guard pada status lama agar request stale atau double submit tidak dianggap sukses
+- result handling:
+  - success me-revalidate daftar dan detail project lalu redirect ke halaman detail project
+  - reject yang masih berada dalam flow form dikembalikan sebagai `errorMessage` satu baris di surface archive project
 - reject log utama:
   - `project.archive_forbidden`
   - `project.archive_session_invalid`
   - `project.archive_invalid_payload`
-
-Catatan: dokumentasi ini sengaja memisahkan auth routes dan server actions supaya entry backend yang sensitif tetap terlihat jelas saat audit security dilakukan.
+  - `project.archive_missing`
+  - `project.archive_invalid_state`
+  - `project.archive_conflict`
+- failure log utama:
+  - `project.archive_lookup_failed`
+  - `project.archive_failed`

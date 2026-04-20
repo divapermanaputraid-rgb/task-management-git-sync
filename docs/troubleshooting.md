@@ -42,23 +42,27 @@ Panduan singkat untuk masalah yang paling mungkin muncul di repo ini.
 - jika `DEVELOPER` terlihat ditolak di UI tetapi masih bisa memicu mutasi, cek server action terkait dan pastikan role diverifikasi di backend
 - untuk create project, log reject permission yang diharapkan adalah `project.create_forbidden`
 - untuk create project dengan payload invalid, log reject validation yang diharapkan adalah `project.create_invalid_payload`
-- untuk archive atau unarchive project, log reject yang diharapkan adalah `project.archive_forbidden`
+- untuk archive atau unarchive project, log reject permission yang diharapkan adalah `project.archive_forbidden`
 - jika actor session tidak lagi valid di database, log reject yang bisa muncul adalah `project.create_session_invalid` atau `project.archive_session_invalid`
 
+## Destructive Mutation Issues
+
+- jika archive atau unarchive tidak jalan karena status project sebenarnya sudah sama, log reject yang diharapkan adalah `project.archive_invalid_state`
+- jika dua tab mengirim perubahan status berurutan, request stale yang datang belakangan harus gagal dengan log `project.archive_conflict`
+- jika hidden input `nextStatus` dimanipulasi, mutasi harus gagal dengan log `project.archive_invalid_payload`
+- jika project target sudah tidak ada, reject yang diharapkan adalah `project.archive_missing`
+- jika lookup status project gagal sebelum validasi selesai, error log yang diharapkan adalah `project.archive_lookup_failed`
+
 ## Verification Issues
 
-- gunakan `npm test` untuk helper auth redirect dan validasi create project yang sudah punya unit test
+- gunakan `npm test` untuk helper auth redirect, validasi create project, dan helper transisi archive project yang sudah punya unit test
 - gunakan `npm run lint` untuk memastikan perubahan tetap bersih
+- gunakan `npx tsc --noEmit` untuk memastikan flow action dan form state tetap aman secara tipe
 - untuk negative test permission, copy request sukses dari Network browser lalu replay saat login sebagai `DEVELOPER`
-- untuk negative test validation, coba tanggal mustahil, format timestamp, atau `endDate` yang lebih awal dari `startDate`
-- hasil yang benar adalah mutasi gagal dan log backend mencatat reject permission atau reject validation sesuai kasus
-
-## Verification Issues
-
-- gunakan `npm test` untuk helper auth redirect yang sudah punya unit test
-- gunakan `npm run lint` untuk memastikan perubahan tetap bersih
-- untuk negative test permission, copy request sukses dari Network browser lalu replay saat login sebagai `DEVELOPER`
-- hasil yang benar adalah mutasi gagal dan log backend mencatat reject permission
+- untuk negative test stale mutation, buka detail project yang sama di dua tab lalu submit archive atau unarchive dari kedua tab secara berurutan
+- untuk negative test invalid transition, kirim ulang request lama setelah status project sudah berubah
+- untuk negative test payload, ubah `nextStatus` di DevTools ke nilai yang tidak valid lalu submit form
+- hasil yang benar adalah mutasi gagal, status project tidak berubah, dan log backend mencatat reject yang sesuai dengan kasusnya
 
 ## Database Connection Issues
 

@@ -25,3 +25,6 @@ Dokumen ini memakai log berbasis sprint, bukan versioning enterprise.
 - catch-up unit test hanya untuk helper pure yang stabil
 - mengeraskan validasi create project di server dengan schema yang menormalisasi field opsional dan menolak tanggal tidak valid
 - menambahkan field-level error state dan unit test untuk validasi create project
+- mengeraskan flow archive dan unarchive project dengan validasi transisi berbasis status server
+- menolak stale destructive mutation dan mengembalikan error state satu baris pada surface archive project
+- menambahkan unit test untuk helper transisi archive project

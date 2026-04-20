@@ -8,13 +8,22 @@ import { getLoginRedirectUrl } from "@/lib/auth/redirects";
 import { prisma } from "@/lib/db/prisma";
 import { logger } from "@/lib/logger";
 import { canArchiveProject } from "@/lib/Permission";
+import { validateProjectArchiveTransition } from "@/lib/projects/archive";
 import { toggleProjectArchiveSchema } from "@/lib/validations/project";
 
+export type ProjectArchiveActionState = {
+  errorMessage?: string;
+};
+
 export async function setProjectArchiveStateAction(
+  _previousState: ProjectArchiveActionState,
   formData: FormData,
-): Promise<void> {
+): Promise<ProjectArchiveActionState> {
   const rawProjectId = formData.get("projectId");
+  const rawNextStatus = formData.get("nextStatus");
   const projectId = typeof rawProjectId === "string" ? rawProjectId : "";
+  const submittedNextStatus =
+    typeof rawNextStatus === "string" ? rawNextStatus : null;
   const session = await auth();
 
   if (!session?.user) {
@@ -60,12 +69,14 @@ export async function setProjectArchiveStateAction(
       reason: "insufficient_role",
     });
 
-    redirect("/projects");
+    return {
+      errorMessage: "Anda tidak punya akses untuk mengubah status project.",
+    };
   }
 
   const parsed = toggleProjectArchiveSchema.safeParse({
     projectId: rawProjectId,
-    nextStatus: formData.get("nextStatus"),
+    nextStatus: rawNextStatus,
   });
 
   if (!parsed.success) {
@@ -76,10 +87,14 @@ export async function setProjectArchiveStateAction(
       actorUserId: actor.id,
       role: actor.role,
       projectId: projectId || null,
+      submittedNextStatus,
       reason: "invalid_payload",
+      issueCount: parsed.error.issues.length,
     });
 
-    redirect("/projects");
+    return {
+      errorMessage: "Permintaan perubahan status project tidak valid.",
+    };
   }
 
   const { projectId: parsedProjectId, nextStatus } = parsed.data;
@@ -104,10 +119,13 @@ export async function setProjectArchiveStateAction(
       actorUserId: actor.id,
       role: actor.role,
       projectId: parsedProjectId,
+      nextStatus,
       message: error instanceof Error ? error.message : "unknown_error",
     });
 
-    redirect(`/projects/${parsedProjectId}`);
+    return {
+      errorMessage: "Status project gagal diperiksa. Silakan coba lagi.",
+    };
   }
 
   if (!currentProject) {
@@ -118,36 +136,78 @@ export async function setProjectArchiveStateAction(
       actorUserId: actor.id,
       role: actor.role,
       projectId: parsedProjectId,
+      nextStatus,
       reason: "project_not_found",
     });
 
-    redirect("/projects");
+    return {
+      errorMessage: "Project tidak ditemukan.",
+    };
+  }
+
+  const transition = validateProjectArchiveTransition({
+    currentStatus: currentProject.status,
+    nextStatus,
+  });
+
+  if (!transition.ok) {
+    logger.warn("project.archive_invalid_state", {
+      area: "projects",
+      action: "set_project_archive_state",
+      result: "rejected",
+      actorUserId: actor.id,
+      role: actor.role,
+      projectId: parsedProjectId,
+      currentStatus: transition.currentStatus,
+      nextStatus: transition.nextStatus,
+      reason: transition.reason,
+    });
+
+    return {
+      errorMessage: transition.message,
+    };
   }
 
   try {
-    if (currentProject.status !== nextStatus) {
-      await prisma.project.update({
-        where: {
-          id: parsedProjectId,
-        },
-        data: {
-          status: nextStatus,
-        },
+    const updateResult = await prisma.project.updateMany({
+      where: {
+        id: parsedProjectId,
+        status: transition.currentStatus,
+      },
+      data: {
+        status: transition.nextStatus,
+      },
+    });
+
+    if (updateResult.count !== 1) {
+      logger.warn("project.archive_conflict", {
+        area: "projects",
+        action: "set_project_archive_state",
+        result: "rejected",
+        actorUserId: actor.id,
+        role: actor.role,
+        projectId: parsedProjectId,
+        currentStatus: transition.currentStatus,
+        nextStatus: transition.nextStatus,
+        reason: "stale_transition_state",
       });
 
-      logger.info(
-        nextStatus === "ARCHIVED" ? "project.archived" : "project.unarchived",
-        {
-          area: "projects",
-          action: "set_project_archive_state",
-          result: "succeeded",
-          actorUserId: actor.id,
-          role: actor.role,
-          projectId: parsedProjectId,
-          nextStatus,
-        },
-      );
+      return {
+        errorMessage:
+          "Status project sudah berubah. Muat ulang halaman lalu coba lagi.",
+      };
     }
+
+    logger.info(transition.successEvent, {
+      area: "projects",
+      action: "set_project_archive_state",
+      result: "succeeded",
+      actorUserId: actor.id,
+      role: actor.role,
+      projectId: parsedProjectId,
+      currentStatus: transition.currentStatus,
+      nextStatus: transition.nextStatus,
+    });
   } catch (error) {
     logger.error("project.archive_failed", {
       area: "projects",
@@ -156,8 +216,14 @@ export async function setProjectArchiveStateAction(
       actorUserId: actor.id,
       role: actor.role,
       projectId: parsedProjectId,
+      currentStatus: transition.currentStatus,
+      nextStatus: transition.nextStatus,
       message: error instanceof Error ? error.message : "unknown_error",
     });
+
+    return {
+      errorMessage: "Status project gagal diperbarui. Silakan coba lagi.",
+    };
   }
 
   revalidatePath("/projects");

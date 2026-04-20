@@ -9,8 +9,7 @@ import { getLoginRedirectUrl } from "@/lib/auth/redirects";
 import { canArchiveProject } from "@/lib/Permission";
 import { getVisibleProjectDetail } from "@/lib/projects/queries";
 
-import { setProjectArchiveStateAction } from "./actions";
-
+import { ProjectArchiveForm } from "./_components/project-archive-form";
 type ProjectDetailPageProps = {
   params: Promise<{
     projectId: string;
@@ -40,10 +39,6 @@ export default async function ProjectDetailPage({
   const canManageArchive = canArchiveProject(session.user.role);
   const statusLabel = isArchived ? "Arsip" : "Aktif";
   const statusTone = isArchived ? "neutral" : "success";
-  const archiveActionLabel = isArchived
-    ? "Aktifkan Kembali Project"
-    : "Arsipkan Project";
-  const nextStatus = isArchived ? "ACTIVE" : "ARCHIVED";
 
   const timelineLabel =
     project.startDate && project.endDate
@@ -67,16 +62,10 @@ export default async function ProjectDetailPage({
             <StatusPill tone={statusTone}>{statusLabel}</StatusPill>
 
             {canManageArchive ? (
-              <form action={setProjectArchiveStateAction}>
-                <input type="hidden" name="projectId" value={project.id} />
-                <input type="hidden" name="nextStatus" value={nextStatus} />
-                <AppButton
-                  type="submit"
-                  variant={isArchived ? "primary" : "secondary"}
-                >
-                  {archiveActionLabel}
-                </AppButton>
-              </form>
+              <ProjectArchiveForm
+                projectId={project.id}
+                isArchived={isArchived}
+              />
             ) : null}
           </div>
         }

@@ -42,6 +42,15 @@ Dokumen ini hanya mencatat alur yang sudah ada di repo saat ini.
 4. `DEVELOPER` tetap ditolak walaupun request dimanipulasi manual dari browser.
 5. Penolakan permission dicatat ke log backend agar audit server tetap jelas.
 
+## Project Archive Validation Flow
+
+1. Halaman detail project merender form archive atau unarchive khusus route untuk `PM_ADMIN`.
+2. Server action hanya membaca field `projectId` dan `nextStatus` dari `FormData`.
+3. Actor tetap dimuat ulang dari database sebelum perubahan status dijalankan.
+4. Status project saat ini dimuat ulang dari database lalu divalidasi agar transisi `ACTIVE -> ACTIVE` dan `ARCHIVED -> ARCHIVED` ditolak dengan jelas.
+5. Write status memakai update bersyarat pada status lama agar double submit atau stale tab tidak diam-diam menimpa state terbaru.
+6. Payload invalid, transisi invalid, dan stale mutation dikembalikan sebagai error satu baris di form serta dicatat ke log backend.
+
 ## Project Create Validation Flow
 
 1. Form `Projects / New` hanya mengirim field `name`, `description`, `startDate`, dan `endDate`.
