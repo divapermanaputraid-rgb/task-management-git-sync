@@ -42,6 +42,15 @@ Dokumen ini hanya mencatat alur yang sudah ada di repo saat ini.
 4. `DEVELOPER` tetap ditolak walaupun request dimanipulasi manual dari browser.
 5. Penolakan permission dicatat ke log backend agar audit server tetap jelas.
 
+## Project Create Validation Flow
+
+1. Form `Projects / New` hanya mengirim field `name`, `description`, `startDate`, dan `endDate`.
+2. Server action tetap membaca field secara whitelist dari `FormData` dan tidak mempercayai field lain dari client.
+3. `createProjectSchema` men-trim input teks, mengubah field opsional kosong menjadi `null`, dan hanya menerima tanggal dengan format `YYYY-MM-DD`.
+4. Tanggal kalender yang tidak valid, format tanggal yang tidak sesuai, dan range tanggal terbalik ditolak sebelum write Prisma dijalankan.
+5. Payload invalid dikembalikan ke form sebagai field-level error dan dicatat ke log backend sebagai `project.create_invalid_payload`.
+6. Payload valid baru diteruskan ke Prisma untuk membuat project dan redirect ke detail project.
+
 ## Current Sensitive Actions
 
 Saat ini mutasi sensitif yang sudah ada di repo adalah:

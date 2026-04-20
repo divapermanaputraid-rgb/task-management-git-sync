@@ -57,9 +57,17 @@ Repo ini saat ini juga memakai Next.js Server Actions untuk mutasi internal. Jal
 - auth: wajib session valid
 - permission: hanya `PM_ADMIN`
 - enforcement: actor diambil dari session lalu role actor dimuat ulang dari database sebelum create dijalankan
+- validation:
+  - server hanya membaca field `name`, `description`, `startDate`, dan `endDate`
+  - validasi utama memakai `createProjectSchema` di `src/lib/validations/project.ts`
+  - `description` kosong dinormalisasi menjadi `null`
+  - `startDate` dan `endDate` kosong dinormalisasi menjadi `null`
+  - tanggal hanya diterima dalam format `YYYY-MM-DD`
+  - tanggal kalender tidak valid dan range tanggal terbalik ditolak sebelum write database
 - reject log utama:
   - `project.create_forbidden`
   - `project.create_session_invalid`
+  - `project.create_invalid_payload`
 
 ### `setProjectArchiveStateAction`
 

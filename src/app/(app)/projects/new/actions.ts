@@ -1,4 +1,5 @@
 "use server";
+import type { ZodError } from "zod";
 
 import { redirect } from "next/navigation";
 
@@ -10,9 +11,49 @@ import { logger } from "@/lib/logger";
 import { canCreateProject } from "@/lib/Permission";
 import { createProjectSchema } from "@/lib/validations/project";
 
+const createProjectFieldNames = [
+  "name",
+  "description",
+  "startDate",
+  "endDate",
+] as const;
+
+type CreateProjectFieldName = (typeof createProjectFieldNames)[number];
+
+type CreateProjectFieldErrors = Partial<Record<CreateProjectFieldName, string>>;
+
+const createProjectFieldNameSet = new Set<CreateProjectFieldName>(
+  createProjectFieldNames,
+);
+
 export type CreateProjectState = {
   errorMessage?: string;
+  fieldErrors?: CreateProjectFieldErrors;
 };
+
+function getCreateProjectFieldErrors(
+  error: ZodError,
+): CreateProjectFieldErrors {
+  const fieldErrors: CreateProjectFieldErrors = {};
+
+  for (const issue of error.issues) {
+    const field = issue.path[0];
+
+    if (typeof field !== "string") {
+      continue;
+    }
+
+    const fieldName = field as CreateProjectFieldName;
+
+    if (!createProjectFieldNameSet.has(fieldName) || fieldErrors[fieldName]) {
+      continue;
+    }
+
+    fieldErrors[fieldName] = issue.message;
+  }
+
+  return fieldErrors;
+}
 
 export async function createProjectAction(
   _previousState: CreateProjectState,
@@ -72,23 +113,38 @@ export async function createProjectAction(
   });
 
   if (!parsed.success) {
+    const fieldErrors = getCreateProjectFieldErrors(parsed.error);
+    const issueFields = Object.keys(fieldErrors).join(", ") || null;
+
+    logger.warn("project.create_invalid_payload", {
+      area: "projects",
+      action: "create_project",
+      result: "rejected",
+      actorUserId: actor.id,
+      role: actor.role,
+      reason: "invalid_payload",
+      issueCount: parsed.error.issues.length,
+      issueFields,
+    });
+
     return {
       errorMessage:
         parsed.error.issues[0]?.message ?? "Data project tidak valid.",
+      fieldErrors,
     };
   }
+
+  const projectInput = parsed.data;
 
   let createdProjectId: string | null = null;
 
   try {
     const project = await prisma.project.create({
       data: {
-        name: parsed.data.name,
-        description: parsed.data.description,
-        startDate: parsed.data.startDate
-          ? new Date(parsed.data.startDate)
-          : null,
-        endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : null,
+        name: projectInput.name,
+        description: projectInput.description,
+        startDate: projectInput.startDate,
+        endDate: projectInput.endDate,
         createdById: actor.id,
       },
       select: {

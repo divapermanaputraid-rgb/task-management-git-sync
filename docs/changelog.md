@@ -23,3 +23,5 @@ Dokumen ini memakai log berbasis sprint, bukan versioning enterprise.
 - menambahkan logging reject untuk permission dan invalid session pada action sensitif
 - melengkapi dokumentasi operasional repo
 - catch-up unit test hanya untuk helper pure yang stabil
+- mengeraskan validasi create project di server dengan schema yang menormalisasi field opsional dan menolak tanggal tidak valid
+- menambahkan field-level error state dan unit test untuk validasi create project

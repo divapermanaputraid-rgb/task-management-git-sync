@@ -40,9 +40,18 @@ Panduan singkat untuk masalah yang paling mungkin muncul di repo ini.
 ## Permission Issues
 
 - jika `DEVELOPER` terlihat ditolak di UI tetapi masih bisa memicu mutasi, cek server action terkait dan pastikan role diverifikasi di backend
-- untuk create project, log reject yang diharapkan adalah `project.create_forbidden`
+- untuk create project, log reject permission yang diharapkan adalah `project.create_forbidden`
+- untuk create project dengan payload invalid, log reject validation yang diharapkan adalah `project.create_invalid_payload`
 - untuk archive atau unarchive project, log reject yang diharapkan adalah `project.archive_forbidden`
 - jika actor session tidak lagi valid di database, log reject yang bisa muncul adalah `project.create_session_invalid` atau `project.archive_session_invalid`
+
+## Verification Issues
+
+- gunakan `npm test` untuk helper auth redirect dan validasi create project yang sudah punya unit test
+- gunakan `npm run lint` untuk memastikan perubahan tetap bersih
+- untuk negative test permission, copy request sukses dari Network browser lalu replay saat login sebagai `DEVELOPER`
+- untuk negative test validation, coba tanggal mustahil, format timestamp, atau `endDate` yang lebih awal dari `startDate`
+- hasil yang benar adalah mutasi gagal dan log backend mencatat reject permission atau reject validation sesuai kasus
 
 ## Verification Issues
 
