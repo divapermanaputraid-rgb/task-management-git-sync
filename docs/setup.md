@@ -22,6 +22,11 @@ Wajib:
 - `NEXTAUTH_URL` - URL aplikasi lokal, biasanya `http://localhost:3000`
 - `SEED_DEFAULT_PASSWORD` - password baseline untuk user seed
 
+Opsional tetapi dibutuhkan untuk GitHub login:
+
+- `GITHUB_ID` - client id dari GitHub OAuth App
+- `GITHUB_SECRET` - client secret dari GitHub OAuth App
+
 Opsional:
 
 - `SHADOW_DATABASE_URL` - hanya diperlukan jika nanti menjalankan `prisma migrate dev` dengan shadow database terpisah
@@ -60,11 +65,12 @@ Seed akan membuat atau memperbarui akun berikut:
 
 Semua akun seed memakai password yang diambil dari `SEED_DEFAULT_PASSWORD`.
 
-## Menjalankan Lokal
+## GitHub OAuth Setup
 
-```bash
-npm run dev
-```
+1. Buat GitHub OAuth App dari GitHub Developer Settings.
+2. Isi `Homepage URL` dengan `http://localhost:3000`.
+3. Isi `Authorization callback URL` dengan `http://localhost:3000/api/auth/callback/github`.
+4. Salin client id ke `GITHUB_ID`.
+5. Salin client secret ke `GITHUB_SECRET`.
 
-Jika database dan environment sudah benar, login bisa dicoba lewat halaman `/login`.
-
+GitHub login hanya muncul jika `GITHUB_ID` dan `GITHUB_SECRET` sudah diisi.

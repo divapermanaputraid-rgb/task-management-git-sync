@@ -31,3 +31,8 @@ Dokumen ini memakai log berbasis sprint, bukan versioning enterprise.
 - memusatkan technical debug logging backend melalui `src/lib/logger.ts`
 - menyamakan auth, proxy, seed, dan mutasi project ke shape log terstruktur yang sama
 - menambahkan unit test untuk output logger agar baseline logging tidak mudah regress
+- menambahkan GitHub login sebagai provider tambahan tanpa mengganti baseline credentials
+- menambahkan self-serve signup GitHub yang membuat user internal baru dengan role default `DEVELOPER`
+- menambahkan linkage minimal `githubAccountId` pada user tanpa menambah adapter atau tabel `accounts`
+- menjaga role dan authorization tetap berasal dari database internal setelah login GitHub
+- menampilkan opsi login GitHub hanya saat konfigurasi OAuth sudah tersedia

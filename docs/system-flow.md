@@ -5,9 +5,15 @@ Dokumen ini hanya mencatat alur yang sudah ada di repo saat ini.
 ## Login Flow
 
 1. Pengguna membuka `/login`.
-2. Jika sesi belum ada, pengguna melihat form login.
-3. Saat kredensial valid, NextAuth membuat session berbasis JWT.
-4. Setelah login, sistem mengarahkan pengguna ke tujuan yang aman:
+2. Jika sesi belum ada, pengguna melihat login credentials dan opsi GitHub bila OAuth sudah dikonfigurasi.
+3. Saat kredensial valid, NextAuth membuat session berbasis JWT dari user internal yang sudah ada.
+4. Saat GitHub sign-in berhasil, sistem mencari linkage provider lebih dulu lalu:
+   - memakai user internal yang sudah ter-link
+   - menghubungkan user internal yang email-nya cocok
+   - atau membuat user internal baru dengan role `DEVELOPER`
+5. User baru hasil GitHub signup tidak otomatis menjadi member project mana pun.
+6. Jika identitas GitHub tidak lengkap atau linkage bentrok, sign-in ditolak bersih.
+7. Setelah login, sistem mengarahkan pengguna ke tujuan yang aman:
    - callback URL yang valid jika ada
    - fallback ke route default berdasarkan role
 

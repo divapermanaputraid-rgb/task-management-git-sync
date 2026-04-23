@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
+import { auth, isGitHubAuthEnabled } from "@/auth";
 import { AppSurface } from "@/components/ui/app-surface";
 import { getPostLoginRedirect } from "@/lib/auth/redirects";
 
@@ -31,7 +31,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </p>
         </div>
 
-        <LoginForm />
+        <LoginForm isGitHubAuthEnabled={isGitHubAuthEnabled} />
       </AppSurface>
     </main>
   );
