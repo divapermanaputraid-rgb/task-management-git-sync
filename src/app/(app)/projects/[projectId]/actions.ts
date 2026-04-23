@@ -1,5 +1,7 @@
 "use server";
 
+import type { ZodError } from "zod";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -15,6 +17,20 @@ export type ProjectArchiveActionState = {
   errorMessage?: string;
 };
 
+function getArchiveIssueFields(error: ZodError): string[] | undefined {
+  const issueFields = [
+    ...new Set(
+      error.issues.flatMap((issue) => {
+        const field = issue.path[0];
+
+        return typeof field === "string" ? [field] : [];
+      }),
+    ),
+  ];
+
+  return issueFields.length > 0 ? issueFields : undefined;
+}
+
 export async function setProjectArchiveStateAction(
   _previousState: ProjectArchiveActionState,
   formData: FormData,
@@ -23,7 +39,7 @@ export async function setProjectArchiveStateAction(
   const rawNextStatus = formData.get("nextStatus");
   const projectId = typeof rawProjectId === "string" ? rawProjectId : "";
   const submittedNextStatus =
-    typeof rawNextStatus === "string" ? rawNextStatus : null;
+    typeof rawNextStatus === "string" ? rawNextStatus : undefined;
   const session = await auth();
 
   if (!session?.user) {
@@ -49,7 +65,7 @@ export async function setProjectArchiveStateAction(
       action: "set_project_archive_state",
       result: "rejected",
       actorUserId,
-      projectId: projectId || null,
+      projectId: projectId || undefined,
       reason: "user_not_found",
     });
 
@@ -65,7 +81,7 @@ export async function setProjectArchiveStateAction(
       result: "rejected",
       actorUserId: actor.id,
       role: actor.role,
-      projectId: projectId || null,
+      projectId: projectId || undefined,
       reason: "insufficient_role",
     });
 
@@ -86,10 +102,11 @@ export async function setProjectArchiveStateAction(
       result: "rejected",
       actorUserId: actor.id,
       role: actor.role,
-      projectId: projectId || null,
+      projectId: projectId || undefined,
       submittedNextStatus,
       reason: "invalid_payload",
       issueCount: parsed.error.issues.length,
+      issueFields: getArchiveIssueFields(parsed.error),
     });
 
     return {
@@ -112,16 +129,20 @@ export async function setProjectArchiveStateAction(
       },
     });
   } catch (error) {
-    logger.error("project.archive_lookup_failed", {
-      area: "projects",
-      action: "set_project_archive_state",
-      result: "failed",
-      actorUserId: actor.id,
-      role: actor.role,
-      projectId: parsedProjectId,
-      nextStatus,
-      message: error instanceof Error ? error.message : "unknown_error",
-    });
+    logger.error(
+      "project.archive_lookup_failed",
+      {
+        area: "projects",
+        action: "set_project_archive_state",
+        result: "failed",
+        actorUserId: actor.id,
+        role: actor.role,
+        projectId: parsedProjectId,
+        nextStatus,
+        reason: "database_lookup_failed",
+      },
+      error,
+    );
 
     return {
       errorMessage: "Status project gagal diperiksa. Silakan coba lagi.",
@@ -209,17 +230,21 @@ export async function setProjectArchiveStateAction(
       nextStatus: transition.nextStatus,
     });
   } catch (error) {
-    logger.error("project.archive_failed", {
-      area: "projects",
-      action: "set_project_archive_state",
-      result: "failed",
-      actorUserId: actor.id,
-      role: actor.role,
-      projectId: parsedProjectId,
-      currentStatus: transition.currentStatus,
-      nextStatus: transition.nextStatus,
-      message: error instanceof Error ? error.message : "unknown_error",
-    });
+    logger.error(
+      "project.archive_failed",
+      {
+        area: "projects",
+        action: "set_project_archive_state",
+        result: "failed",
+        actorUserId: actor.id,
+        role: actor.role,
+        projectId: parsedProjectId,
+        currentStatus: transition.currentStatus,
+        nextStatus: transition.nextStatus,
+        reason: "database_write_failed",
+      },
+      error,
+    );
 
     return {
       errorMessage: "Status project gagal diperbarui. Silakan coba lagi.",

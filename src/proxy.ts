@@ -1,4 +1,5 @@
 import { withAuth } from "next-auth/middleware";
+
 import { logger } from "@/lib/logger";
 
 export default withAuth({
@@ -6,16 +7,16 @@ export default withAuth({
     signIn: "/login",
   },
   callbacks: {
-    authorized: ({ token }) => {
+    authorized: ({ req, token }) => {
       const isAuthorized = !!token;
 
       if (!isAuthorized) {
         logger.warn("access.unauthorized", {
           area: "access",
-          action: "middleware_authorized",
+          action: "guard_route",
           result: "blocked",
           reason: "missing_session_token",
-          message: "Request blocked by auth middleware.",
+          requestPath: req.nextUrl.pathname,
         });
       }
 

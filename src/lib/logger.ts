@@ -1,13 +1,85 @@
 type LogLevel = "info" | "warn" | "error";
 
-type LogContext = Record<string, string | number | boolean | null | undefined>;
+type LogPrimitive = string | number | boolean | null;
+type LogValue = LogPrimitive | readonly LogPrimitive[];
 
-function emit(level: LogLevel, message: string, context: LogContext = {}) {
+export type LogResult =
+  | "succeeded"
+  | "rejected"
+  | "blocked"
+  | "failed"
+  | "recovered";
+
+export type LogContext = {
+  [key: string]: LogValue | undefined;
+  area: string;
+  action: string;
+  result: LogResult;
+  reason?: string;
+  actorUserId?: string;
+  role?: string;
+  projectId?: string;
+  taskId?: string;
+  repositoryConnectionId?: string;
+  detail?: string;
+};
+
+type ErrorWithCode = Error & {
+  code?: unknown;
+};
+
+const reservedKeys = new Set(["timestamp", "level", "event"]);
+
+function getErrorFields(error: unknown): Record<string, LogValue | undefined> {
+  if (error instanceof Error) {
+    const errorWithCode = error as ErrorWithCode;
+
+    return {
+      errorName: error.name,
+      errorMessage: error.message,
+      errorCode:
+        typeof errorWithCode.code === "string" ||
+        typeof errorWithCode.code === "number"
+          ? String(errorWithCode.code)
+          : undefined,
+    };
+  }
+
+  if (typeof error === "string") {
+    return {
+      errorMessage: error,
+    };
+  }
+
+  return {
+    errorMessage: "unknown_error",
+  };
+}
+
+function compactFields(
+  fields: Record<string, LogValue | undefined>,
+): Record<string, LogValue> {
+  return Object.fromEntries(
+    Object.entries(fields).filter(
+      ([key, value]) => value !== undefined && !reservedKeys.has(key),
+    ),
+  ) as Record<string, LogValue>;
+}
+
+function emit(
+  level: LogLevel,
+  event: string,
+  context: LogContext,
+  error?: unknown,
+) {
   const entry = {
     timestamp: new Date().toISOString(),
     level,
-    message,
-    ...context,
+    event,
+    ...compactFields({
+      ...context,
+      ...getErrorFields(error),
+    }),
   };
 
   const serialized = JSON.stringify(entry);
@@ -26,14 +98,13 @@ function emit(level: LogLevel, message: string, context: LogContext = {}) {
 }
 
 export const logger = {
-  info(message: string, context?: LogContext) {
-    emit("info", message, context);
+  info(event: string, context: LogContext) {
+    emit("info", event, context);
   },
-  warn(message: string, context?: LogContext) {
-    emit("warn", message, context);
+  warn(event: string, context: LogContext) {
+    emit("warn", event, context);
   },
-  error(message: string, context?: LogContext) {
-    emit("error", message, context);
+  error(event: string, context: LogContext, error?: unknown) {
+    emit("error", event, context, error);
   },
 };
-

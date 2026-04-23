@@ -14,13 +14,16 @@ export async function getUserByEmail(email: string) {
       },
     });
   } catch (error) {
-    logger.error("auth.user_lookup_failed", {
-      area: "auth",
-      action: "get_user_by_email",
-      result: "failed",
-      reason: "database_error",
-      message: error instanceof Error ? error.message : "unknown_error",
-    });
+    logger.error(
+      "auth.user_lookup_failed",
+      {
+        area: "auth",
+        action: "get_user_by_email",
+        result: "failed",
+        reason: "database_error",
+      },
+      error,
+    );
     throw error;
   }
 }

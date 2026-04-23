@@ -66,22 +66,25 @@ async function main() {
   logger.info("seed.completed", {
     area: "seed",
     action: "auth_baseline",
-    result: "success",
-    message: "Seed auth baseline berhasil dibuat.",
+    result: "succeeded",
   });
 }
 
 main()
   .catch((error) => {
-    logger.error("seed.failed", {
-      area: "seed",
-      action: "auth_baseline",
-      result: "failed",
-      reason: "database_or_seed_error",
-      message: error instanceof Error ? error.message : "unknown_error",
-    });
+    logger.error(
+      "seed.failed",
+      {
+        area: "seed",
+        action: "auth_baseline",
+        result: "failed",
+        reason: "database_or_seed_error",
+      },
+      error,
+    );
     process.exit(1);
   })
+
   .finally(async () => {
     await prisma.$disconnect();
   });

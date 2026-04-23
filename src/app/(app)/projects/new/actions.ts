@@ -114,7 +114,7 @@ export async function createProjectAction(
 
   if (!parsed.success) {
     const fieldErrors = getCreateProjectFieldErrors(parsed.error);
-    const issueFields = Object.keys(fieldErrors).join(", ") || null;
+    const issueFields = Object.keys(fieldErrors) as CreateProjectFieldName[];
 
     logger.warn("project.create_invalid_payload", {
       area: "projects",
@@ -124,7 +124,7 @@ export async function createProjectAction(
       role: actor.role,
       reason: "invalid_payload",
       issueCount: parsed.error.issues.length,
-      issueFields,
+      issueFields: issueFields?.length > 0 ? issueFields : undefined,
     });
 
     return {
@@ -181,14 +181,18 @@ export async function createProjectAction(
       };
     }
 
-    logger.error("project.create_failed", {
-      area: "projects",
-      action: "create_project",
-      result: "failed",
-      actorUserId: actor.id,
-      role: actor.role,
-      message: error instanceof Error ? error.message : "unknown_error",
-    });
+    logger.error(
+      "project.create_failed",
+      {
+        area: "projects",
+        action: "create_project",
+        result: "failed",
+        actorUserId: actor.id,
+        role: actor.role,
+        reason: "database_write_failed",
+      },
+      error,
+    );
 
     return {
       errorMessage: "Project gagal dibuat. Silakan coba lagi.",
