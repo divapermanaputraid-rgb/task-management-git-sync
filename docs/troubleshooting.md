@@ -22,6 +22,8 @@ Panduan singkat untuk masalah yang paling mungkin muncul di repo ini.
 - pastikan `SEED_DEFAULT_PASSWORD` terisi
 - pastikan `DATABASE_URL` valid dan database bisa diakses
 - seed akan gagal jika Prisma tidak bisa terhubung ke database target
+- event sukses seed yang diharapkan adalah `seed.completed`
+- event gagal seed yang diharapkan adalah `seed.failed`
 
 ## Login/Auth Issues
 
@@ -30,12 +32,15 @@ Panduan singkat untuk masalah yang paling mungkin muncul di repo ini.
 - pastikan user seed sudah dibuat sebelum login
 - jika login berhasil tetapi redirect salah, cek callback URL yang masuk dan pastikan masih path lokal
 - jika verifikasi unauthenticated flow terasa aneh di browser biasa, gunakan incognito karena logout UI belum tersedia
+- jika login ditolak, log reject yang umum adalah `auth.login_failed`
+- jika lookup user gagal di backend, error log yang diharapkan adalah `auth.user_lookup_failed`
 
 ## Route Protection Issues
 
 - jika route internal masih bisa terbuka tanpa login, cek `src/proxy.ts` dan `src/app/(app)/layout.tsx`
 - jika pengguna diarahkan ke login tetapi route asal hilang, cek helper di `src/lib/auth/redirects.ts`
 - jika shell internal sempat tampil tanpa session, cek fallback auth gate di layout grup `(app)`
+- jika request diblok tetapi jejak backend tidak terlihat, cari event `access.unauthorized`
 
 ## Permission Issues
 
@@ -52,10 +57,19 @@ Panduan singkat untuk masalah yang paling mungkin muncul di repo ini.
 - jika hidden input `nextStatus` dimanipulasi, mutasi harus gagal dengan log `project.archive_invalid_payload`
 - jika project target sudah tidak ada, reject yang diharapkan adalah `project.archive_missing`
 - jika lookup status project gagal sebelum validasi selesai, error log yang diharapkan adalah `project.archive_lookup_failed`
+- jika write status gagal, error log yang diharapkan adalah `project.archive_failed`
+
+## Logging Issues
+
+- jika pencarian log backend terasa tidak konsisten, cari berdasarkan field `event`
+- jika log error terlihat tipis, pastikan caller memakai `logger.error(..., error)` dan bukan mengirim `error.message` manual ke context
+- jika field seperti `projectId` atau `taskId` tidak muncul, itu berarti nilainya memang kosong dan sengaja dibuang helper logger
+- jika payload invalid sulit dibaca, cek `issueCount` dan `issueFields` pada event reject
+- jika kamu melihat kebutuhan histori user, jangan campur ke technical debug log karena itu harus tetap dipisahkan dari activity log produk
 
 ## Verification Issues
 
-- gunakan `npm test` untuk helper auth redirect, validasi create project, dan helper transisi archive project yang sudah punya unit test
+- gunakan `npm test` untuk helper auth redirect, logger, validasi create project, dan helper transisi archive project yang sudah punya unit test
 - gunakan `npm run lint` untuk memastikan perubahan tetap bersih
 - gunakan `npx tsc --noEmit` untuk memastikan flow action dan form state tetap aman secara tipe
 - untuk negative test permission, copy request sukses dari Network browser lalu replay saat login sebagai `DEVELOPER`

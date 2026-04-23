@@ -28,3 +28,6 @@ Dokumen ini memakai log berbasis sprint, bukan versioning enterprise.
 - mengeraskan flow archive dan unarchive project dengan validasi transisi berbasis status server
 - menolak stale destructive mutation dan mengembalikan error state satu baris pada surface archive project
 - menambahkan unit test untuk helper transisi archive project
+- memusatkan technical debug logging backend melalui `src/lib/logger.ts`
+- menyamakan auth, proxy, seed, dan mutasi project ke shape log terstruktur yang sama
+- menambahkan unit test untuk output logger agar baseline logging tidak mudah regress

@@ -15,6 +15,10 @@ Dokumentasi ini hanya memuat route dan entry server yang sudah ada dan relevan u
   - email tidak ditemukan
   - password salah
   - session secret belum dikonfigurasi
+- backend log terkait:
+  - `auth.login_failed`
+  - `auth.session_unexpected_state`
+  - `auth.user_lookup_failed`
 
 ### `GET /api/auth/session`
 
@@ -64,10 +68,17 @@ Repo ini saat ini juga memakai Next.js Server Actions untuk mutasi internal. Jal
   - `startDate` dan `endDate` kosong dinormalisasi menjadi `null`
   - tanggal hanya diterima dalam format `YYYY-MM-DD`
   - tanggal kalender tidak valid dan range tanggal terbalik ditolak sebelum write database
+- success log utama:
+  - `project.created`
 - reject log utama:
   - `project.create_forbidden`
   - `project.create_session_invalid`
   - `project.create_invalid_payload`
+- failure log utama:
+  - `project.create_failed`
+- detail log tambahan:
+  - reject payload invalid menyertakan `issueCount` dan `issueFields`
+  - failure database memakai `reason` yang stabil dan field error aman dari helper logger
 
 ### `setProjectArchiveStateAction`
 
@@ -85,6 +96,9 @@ Repo ini saat ini juga memakai Next.js Server Actions untuk mutasi internal. Jal
 - result handling:
   - success me-revalidate daftar dan detail project lalu redirect ke halaman detail project
   - reject yang masih berada dalam flow form dikembalikan sebagai `errorMessage` satu baris di surface archive project
+- success log utama:
+  - `project.archived`
+  - `project.unarchived`
 - reject log utama:
   - `project.archive_forbidden`
   - `project.archive_session_invalid`
@@ -95,3 +109,38 @@ Repo ini saat ini juga memakai Next.js Server Actions untuk mutasi internal. Jal
 - failure log utama:
   - `project.archive_lookup_failed`
   - `project.archive_failed`
+- detail log tambahan:
+  - reject payload invalid menyertakan `issueCount` dan `issueFields`
+  - failure database memakai `reason` yang stabil dan field error aman dari helper logger
+
+## Technical Debug Logging
+
+Technical debug logging untuk repo ini memakai helper terpusat `src/lib/logger.ts`.
+
+- tujuan: menyatukan shape log backend untuk auth, access guard, seed, dan server action sensitif
+- field wajib:
+  - `timestamp`
+  - `level`
+  - `event`
+  - `area`
+  - `action`
+  - `result`
+- field opsional yang umum:
+  - `reason`
+  - `actorUserId`
+  - `role`
+  - `projectId`
+  - `taskId`
+  - `repositoryConnectionId`
+  - `detail`
+- field error aman:
+  - `errorName`
+  - `errorMessage`
+  - `errorCode`
+- level yang dipakai:
+  - `info` untuk mutasi penting yang berhasil
+  - `warn` untuk reject, blocked access, atau payload invalid
+  - `error` untuk failure database atau exception server
+- batas keamanan:
+  - jangan log password, token, cookie, secret, atau raw payload sensitif
+  - pencarian event backend harus memakai field `event`, bukan string bebas di `message`
