@@ -31,6 +31,9 @@ type ErrorWithCode = Error & {
 const reservedKeys = new Set(["timestamp", "level", "event"]);
 
 function getErrorFields(error: unknown): Record<string, LogValue | undefined> {
+  if (error === undefined) {
+    return {};
+  }
   if (error instanceof Error) {
     const errorWithCode = error as ErrorWithCode;
 
