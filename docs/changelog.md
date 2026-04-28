@@ -36,3 +36,9 @@ Dokumen ini memakai log berbasis sprint, bukan versioning enterprise.
 - menambahkan linkage minimal `githubAccountId` pada user tanpa menambah adapter atau tabel `accounts`
 - menjaga role dan authorization tetap berasal dari database internal setelah login GitHub
 - menampilkan opsi login GitHub hanya saat konfigurasi OAuth sudah tersedia
+- menghapus fallback session invalid yang mengubah role tidak dikenal menjadi `DEVELOPER` dan menggantinya dengan fail-closed session handling
+- merapikan logger agar warn/info non-error tidak menulis field error palsu
+- menyelaraskan log mutasi project dengan reason sukses/gagal yang stabil
+- mengaudit batas technical debug log dan product activity log agar tidak bercampur
+- membersihkan helper role/auth Sprint 2 tanpa mengubah behavior produk
+- menambahkan baseline deploy readiness untuk env, setup, migration, seed, GitHub OAuth, dan VPS startup

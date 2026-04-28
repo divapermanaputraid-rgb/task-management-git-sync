@@ -35,6 +35,14 @@ Panduan singkat untuk masalah yang paling mungkin muncul di repo ini.
 - jika login ditolak, log reject yang umum adalah `auth.login_failed`
 - jika lookup user gagal di backend, error log yang diharapkan adalah `auth.user_lookup_failed`
 
+## GitHub OAuth Issues
+
+- jika tombol GitHub tidak muncul, pastikan `GITHUB_ID` dan `GITHUB_SECRET` sudah terisi sebelum app dijalankan ulang
+- jika callback GitHub gagal, pastikan callback URL di GitHub persis `${NEXTAUTH_URL}/api/auth/callback/github`
+- jika deploy memakai domain publik, pastikan `NEXTAUTH_URL` memakai origin publik yang sama
+- jika user GitHub baru berhasil login tetapi tidak melihat project, itu normal sampai membership ditambahkan
+- jika identity GitHub bentrok, log reject yang diharapkan adalah `auth.github_signin_rejected`
+
 ## Route Protection Issues
 
 - jika route internal masih bisa terbuka tanpa login, cek `src/proxy.ts` dan `src/app/(app)/layout.tsx`
@@ -83,6 +91,14 @@ Panduan singkat untuk masalah yang paling mungkin muncul di repo ini.
 - pastikan host, port, user, dan password di `DATABASE_URL` benar
 - pastikan jaringan atau firewall mengizinkan koneksi ke database
 - jika koneksi ke pooler gagal, coba validasi ulang string koneksi dan SSL mode
+
+## Deploy/Start Issues
+
+- jika app gagal start di VPS, pastikan `NODE_ENV=production`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `DATABASE_URL`, dan `DIRECT_URL` tersedia di process manager
+- jika build berhasil tetapi login gagal di production, cek apakah `NEXTAUTH_URL` sama dengan origin publik aplikasi
+- jika migration belum diterapkan, jalankan `npm run db:migrate:deploy` sebelum start aplikasi
+- jika seed mengubah password akun baseline, pastikan `SEED_DEFAULT_PASSWORD` memang nilai yang ingin dipakai
+- jika GitHub login gagal setelah deploy, cek ulang callback URL production di GitHub OAuth App
 
 ## Next.js Dev Issues
 
