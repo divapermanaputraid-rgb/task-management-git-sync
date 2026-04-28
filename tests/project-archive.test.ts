@@ -50,6 +50,7 @@ test("validateProjectArchiveTransition allows ACTIVE to ARCHIVED", () => {
     currentStatus: "ACTIVE",
     nextStatus: "ARCHIVED",
     successEvent: "project.archived",
+    successReason: "project_archived",
   });
 });
 
@@ -64,6 +65,7 @@ test("validateProjectArchiveTransition allows ARCHIVED to ACTIVE", () => {
     currentStatus: "ARCHIVED",
     nextStatus: "ACTIVE",
     successEvent: "project.unarchived",
+    successReason: "project_unarchived",
   });
 });
 
