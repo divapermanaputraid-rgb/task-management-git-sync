@@ -1,5 +1,6 @@
 import { withAuth } from "next-auth/middleware";
 
+import { isValidAuthIdentity } from "@/lib/auth/roles";
 import { logger } from "@/lib/logger";
 
 export default withAuth({
@@ -8,14 +9,14 @@ export default withAuth({
   },
   callbacks: {
     authorized: ({ req, token }) => {
-      const isAuthorized = !!token;
+      const isAuthorized = isValidAuthIdentity(token);
 
       if (!isAuthorized) {
         logger.warn("access.unauthorized", {
           area: "access",
           action: "guard_route",
           result: "blocked",
-          reason: "missing_session_token",
+          reason: token ? "invalid_session_token" : "missing_session_token",
           requestPath: req.nextUrl.pathname,
         });
       }

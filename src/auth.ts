@@ -11,6 +11,7 @@ import { getUserByEmail, resolveGithubUser } from "@/lib/auth/queries";
 import { verifyPassword } from "@/lib/auth/password";
 import { loginSchema } from "@/lib/validations/auth";
 import { logger } from "@/lib/logger";
+import { isValidAuthIdentity, type AppRole } from "@/lib/auth/roles";
 
 const GITHUB_IDENTITY_INCOMPLETE_ERROR = "github_identity_incomplete";
 const GITHUB_IDENTITY_CONFLICT_ERROR = "github_identity_conflict";
@@ -35,15 +36,14 @@ function hydrateAuthUser(
     id: string;
     name: string | null;
     email: string;
-    role: "PM_ADMIN" | "DEVELOPER";
+    role: AppRole;
   },
 ) {
   user.id = resolvedUser.id;
   user.name = resolvedUser.name ?? undefined;
   user.email = resolvedUser.email;
 
-  (user as typeof user & { role?: "PM_ADMIN" | "DEVELOPER" }).role =
-    resolvedUser.role;
+  (user as typeof user & { role?: AppRole }).role = resolvedUser.role;
 }
 
 export const authOptions = {
@@ -181,43 +181,41 @@ export const authOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = typeof token.id === "string" ? token.id : "";
-        session.user.role =
-          token.role === "PM_ADMIN" || token.role === "DEVELOPER"
-            ? token.role
-            : "DEVELOPER";
+        if (!isValidAuthIdentity(token)) {
+          session.user.id = "";
 
-        if (typeof token.id !== "string" || !token.role) {
           logger.warn("auth.session_unexpected_state", {
             area: "auth",
             action: "session",
-            result: "recovered",
-            reason: "missing_token_identity",
+            result: "blocked",
+            reason:
+              typeof token.id === "string" && token.id.length > 0
+                ? "invalid_token_role"
+                : "missing_token_identity",
           });
+          return session;
         }
 
-        if (token.role !== "PM_ADMIN" && token.role !== "DEVELOPER") {
-          logger.warn("auth.session_unexpected_state", {
-            area: "auth",
-            action: "session",
-            result: "recovered",
-            reason: "unknown_role_defaulted",
-          });
-        }
+        session.user.id = token.id;
+        session.user.role = token.role;
       }
-
       return session;
     },
   },
 } satisfies NextAuthOptions;
 
-export function auth(
+export async function auth(
   ...args:
     | [GetServerSidePropsContext["req"], GetServerSidePropsContext["res"]]
     | [NextApiRequest, NextApiResponse]
     | []
 ) {
-  return getServerSession(...args, authOptions);
+  const session = await getServerSession(...args, authOptions);
+
+  if (!session || !isValidAuthIdentity(session.user)) {
+    return null;
+  }
+  return session;
 }
 
 export default NextAuth(authOptions);

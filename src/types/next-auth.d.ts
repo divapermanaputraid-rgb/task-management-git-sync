@@ -1,6 +1,5 @@
 import { DefaultSession } from "next-auth";
-
-export type AppRole = "PM_ADMIN" | "DEVELOPER";
+import type { AppRole } from "@/lib/auth/roles";
 
 declare module "next-auth" {
   interface Session {
