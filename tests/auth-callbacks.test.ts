@@ -30,6 +30,12 @@ async function captureWarn<T>(run: () => Promise<T>) {
   }
 }
 
+function assertNotErrorFields(entry: Record<string, unknown>) {
+  assert.equal("errorName" in entry, false);
+  assert.equal("errorMessage" in entry, false);
+  assert.equal("errorCode" in entry, false);
+}
+
 test("signIn callback allows non-GitHub providers", async () => {
   const result = await signInCallback({
     user: { id: "user-1", email: "dev1@newus.com", role: "DEVELOPER" },
@@ -52,7 +58,10 @@ test("signIn callback rejects incomplete GitHub identity", async () => {
   );
 
   assert.equal(result, "/login?error=github_identity_incomplete");
-  assert.equal(JSON.parse(calls[0]).reason, "identity_incomplete");
+  const entry = JSON.parse(calls[0]) as Record<string, unknown>;
+
+  assert.equal(entry.reason, "identity_incomplete");
+  assertNotErrorFields(entry);
 });
 
 test("jwt callback keeps internal id and role on first sign-in", async () => {
@@ -78,23 +87,43 @@ test("session callback forwards token identity to the session", async () => {
   assert.equal(session.user.role, "DEVELOPER");
 });
 
-test("session callback recovers missing token identity safely", async () => {
+test("session callback blocks missing token identity", async () => {
   const sessionArgs = {
     session: {
       user: { email: "dev1@newus.com", name: "Dev 1", image: null },
       expires: "2099-01-01T00:00:00.000Z",
     },
-    token: { role: "UNKNOWN_ROLE" },
+    token: { role: "DEVELOPER" },
   } as unknown as Parameters<typeof sessionCallback>[0];
 
   const { result, calls } = await captureWarn(() =>
     sessionCallback(sessionArgs),
   );
-
   assert.equal(result.user.id, "");
-  assert.equal(result.user.role, "DEVELOPER");
-  assert.deepEqual(calls.map((entry) => JSON.parse(entry).reason).sort(), [
-    "missing_token_identity",
-    "unknown_role_defaulted",
-  ]);
+  assert.equal((result.user as Record<string, unknown>).role, undefined);
+
+  const entry = JSON.parse(calls[0]) as Record<string, unknown>;
+
+  assert.equal(entry.reason, "missing_token_identity");
+  assertNotErrorFields(entry);
+});
+
+test("session callback blocks invalid token role", async () => {
+  const sessionArgs = {
+    session: {
+      user: { email: "dev1@newus.com", name: "Dev 1", image: null },
+    },
+    token: { id: "user-1", role: "UNKNOWN_ROLE" },
+  } as unknown as Parameters<typeof sessionCallback>[0];
+
+  const { result, calls } = await captureWarn(() =>
+    sessionCallback(sessionArgs),
+  );
+  assert.equal(result.user.id, "");
+  assert.equal((result.user as Record<string, unknown>).role, undefined);
+
+  const entry = JSON.parse(calls[0]) as Record<string, unknown>;
+
+  assert.equal(entry.reason, "invalid_token_role");
+  assertNotErrorFields(entry);
 });
