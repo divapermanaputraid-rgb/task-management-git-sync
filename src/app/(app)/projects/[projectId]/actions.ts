@@ -38,8 +38,6 @@ export async function setProjectArchiveStateAction(
   const rawProjectId = formData.get("projectId");
   const rawNextStatus = formData.get("nextStatus");
   const projectId = typeof rawProjectId === "string" ? rawProjectId : "";
-  const submittedNextStatus =
-    typeof rawNextStatus === "string" ? rawNextStatus : undefined;
   const session = await auth();
 
   if (!session?.user) {
@@ -103,7 +101,6 @@ export async function setProjectArchiveStateAction(
       actorUserId: actor.id,
       role: actor.role,
       projectId: projectId || undefined,
-      submittedNextStatus,
       reason: "invalid_payload",
       issueCount: parsed.error.issues.length,
       issueFields: getArchiveIssueFields(parsed.error),
@@ -228,6 +225,7 @@ export async function setProjectArchiveStateAction(
       projectId: parsedProjectId,
       currentStatus: transition.currentStatus,
       nextStatus: transition.nextStatus,
+      reason: transition.successReason,
     });
   } catch (error) {
     logger.error(

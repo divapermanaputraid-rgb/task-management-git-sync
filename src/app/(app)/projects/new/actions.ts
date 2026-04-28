@@ -159,6 +159,7 @@ export async function createProjectAction(
       actorUserId: actor.id,
       role: actor.role,
       projectId: project.id,
+      reason: "project_created",
     });
 
     createdProjectId = project.id;
@@ -200,6 +201,14 @@ export async function createProjectAction(
   }
 
   if (!createdProjectId) {
+    logger.error("project.create_failed", {
+      area: "projects",
+      action: "create_project",
+      result: "failed",
+      actorUserId: actor.id,
+      role: actor.role,
+      reason: "missing_created_project_id",
+    });
     return {
       errorMessage: "Project gagal dibuat. Silakan coba lagi.",
     };

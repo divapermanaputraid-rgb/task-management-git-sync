@@ -10,6 +10,7 @@ type SuccessfulProjectArchiveTransition = {
   currentStatus: ProjectArchiveStatus;
   nextStatus: ProjectArchiveStatus;
   successEvent: "project.archived" | "project.unarchived";
+  successReason: "project_archived" | "project_unarchived";
 };
 
 type FailedProjectArchiveTransition = {
@@ -41,12 +42,12 @@ export function validateProjectArchiveTransition({
           : "Project ini sudah aktif.",
     };
   }
-
+  const isArchivedTarget = nextStatus === "ARCHIVED";
   return {
     ok: true,
     currentStatus,
     nextStatus,
-    successEvent:
-      nextStatus === "ARCHIVED" ? "project.archived" : "project.unarchived",
+    successEvent: isArchivedTarget ? "project.archived" : "project.unarchived",
+    successReason: isArchivedTarget ? "project_archived" : "project_unarchived",
   };
 }
