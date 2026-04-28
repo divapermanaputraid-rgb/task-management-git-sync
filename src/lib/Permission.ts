@@ -1,4 +1,4 @@
-export type AppRole = "PM_ADMIN" | "DEVELOPER";
+import type { AppRole } from "./auth/roles";
 
 export function isPmAdmin(role: AppRole) {
   return role === "PM_ADMIN";

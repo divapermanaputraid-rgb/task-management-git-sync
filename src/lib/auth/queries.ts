@@ -51,27 +51,6 @@ export async function getUserByEmail(email: string) {
   }
 }
 
-export async function getUserByGithubAccountId(githubAccountId: string) {
-  try {
-    return await prisma.user.findUnique({
-      where: { githubAccountId },
-      select: authUserSelect,
-    });
-  } catch (error) {
-    logger.error(
-      "auth.user_lookup_failed",
-      {
-        area: "auth",
-        action: "get_user_by_github_account_id",
-        result: "failed",
-        reason: "database_error",
-      },
-      error,
-    );
-    throw error;
-  }
-}
-
 export async function resolveGithubUser(params: {
   githubAccountId: string;
   email: string;

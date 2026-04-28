@@ -1,5 +1,5 @@
 import test from "node:test";
-import assert from "node:assert";
+import assert from "node:assert/strict";
 
 import { isAppRole, isValidAuthIdentity } from "@/lib/auth/roles";
 
