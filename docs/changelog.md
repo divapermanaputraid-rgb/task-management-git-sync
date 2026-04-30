@@ -51,3 +51,5 @@ Dokumen ini memakai log berbasis sprint, bukan versioning enterprise.
 - membuat task baru sebagai `BACKLOG` dengan `code` dan `sequenceNumber` dari server
 - menolak create task pada project arsip
 - mencatat product activity `TASK_CREATED` saat task berhasil dibuat
+- menambahkan board task read-only di detail project dengan kolom `BACKLOG`, `TODO`, `IN_PROGRESS`, `IN_REVIEW`, dan `DONE`
+- menampilkan kartu task aktif dengan code, title, timeline, primary owner, dan jumlah assignee

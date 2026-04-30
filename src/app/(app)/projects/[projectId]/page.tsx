@@ -7,6 +7,8 @@ import { AppSurface } from "@/components/ui/app-surface";
 import { StatusPill } from "@/components/ui/status-pill";
 import { getLoginRedirectUrl } from "@/lib/auth/redirects";
 import { canArchiveProject, canCreateTask } from "@/lib/Permission";
+import { getVisibleProjectTaskBoard } from "@/lib/tasks/queries";
+import { ProjectTaskBoard } from "./_components/project-task-board";
 
 import { getVisibleProjectDetail } from "@/lib/projects/queries";
 
@@ -26,11 +28,18 @@ export default async function ProjectDetailPage({
   if (!session?.user) {
     redirect(getLoginRedirectUrl(`/projects/${projectId}`));
   }
-  const project = await getVisibleProjectDetail({
-    projectId,
-    userId: session.user.id,
-    role: session.user.role,
-  });
+  const [project, taskBoardColumns] = await Promise.all([
+    getVisibleProjectDetail({
+      projectId,
+      userId: session.user.id,
+      role: session.user.role,
+    }),
+    getVisibleProjectTaskBoard({
+      projectId,
+      userId: session.user.id,
+      role: session.user.role,
+    }),
+  ]);
 
   if (!project) {
     notFound();
@@ -141,22 +150,9 @@ export default async function ProjectDetailPage({
           </p>
         </AppSurface>
       </section>
+      <ProjectTaskBoard columns={taskBoardColumns} />
 
-      <AppSurface className="space-y-4">
-        <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/35">
-            Board Context
-          </p>
-          <h2 className="text-lg font-semibold text-white">
-            Surface detail project akan dikembangkan di task berikutnya.
-          </h2>
-          <p className="text-sm leading-6 text-white/58">
-            {isArchived
-              ? "Selama project masih arsip, surface ini tetap dibuka dalam mode baca."
-              : "Untuk sekarang halaman ini menyiapkan status dan konteks project sebelum detail penuh dibangun."}
-          </p>
-        </div>
-
+      <AppSurface>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-white/35">
             Diperbarui {formatDate(project.updatedAt)}.

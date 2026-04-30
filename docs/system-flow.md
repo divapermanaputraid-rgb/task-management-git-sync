@@ -80,6 +80,14 @@ Dokumen ini hanya mencatat alur yang sudah ada di repo saat ini.
 7. Project arsip ditolak karena project arsip bersifat read-only.
 8. Success create task menulis product activity `TASK_CREATED` dan technical log `task.created`.
 
+## Project Task Board Flow
+
+1. Pengguna membuka detail project yang bisa dia lihat.
+2. Sistem mengambil task aktif yang belum diarsipkan untuk project tersebut.
+3. Task ditampilkan dalam kolom fixed `BACKLOG`, `TODO`, `IN_PROGRESS`, `IN_REVIEW`, dan `DONE`.
+4. Board masih read-only sampai status transition diaktifkan.
+5. Project arsip tetap bisa dibaca, tetapi tidak menampilkan kontrol mutasi baru.
+
 ## Technical Debug Logging Flow
 
 1. Auth, proxy, seed, dan server action sensitif mengirim log lewat `src/lib/logger.ts`.
