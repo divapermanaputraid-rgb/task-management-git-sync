@@ -58,6 +58,14 @@ Panduan singkat untuk masalah yang paling mungkin muncul di repo ini.
 - untuk archive atau unarchive project, log reject permission yang diharapkan adalah `project.archive_forbidden`
 - jika actor session tidak lagi valid di database, log reject yang bisa muncul adalah `project.create_session_invalid` atau `project.archive_session_invalid`
 
+## Task Create Issues
+
+- jika `DEVELOPER` bisa membuat task, cek server action create task dan pastikan `canCreateTask` diverifikasi di backend
+- jika task code tidak berurutan, cek `Project.taskCodeCounter` dan helper `formatTaskCode`
+- jika project arsip masih bisa menerima task, cek reject path `task.create_project_archived`
+- jika payload task invalid sulit dibaca, cek `issueCount` dan `issueFields` pada event `task.create_invalid_payload`
+- jika task berhasil dibuat tetapi activity tidak muncul nanti, cek row `TASK_CREATED` di `task_activity_logs`
+
 ## Destructive Mutation Issues
 
 - jika archive atau unarchive tidak jalan karena status project sebenarnya sudah sama, log reject yang diharapkan adalah `project.archive_invalid_state`

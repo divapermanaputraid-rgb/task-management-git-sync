@@ -69,6 +69,17 @@ Dokumen ini hanya mencatat alur yang sudah ada di repo saat ini.
 6. Reject payload invalid menyertakan `issueFields` agar field yang gagal bisa dibaca langsung dari log backend.
 7. Payload valid baru diteruskan ke Prisma untuk membuat project dan redirect ke detail project.
 
+## Task Create Flow
+
+1. PM/Admin membuka halaman create task dari detail project aktif.
+2. Server action memverifikasi session lalu memuat ulang actor dari database.
+3. `DEVELOPER` ditolak walaupun request dikirim manual.
+4. Server hanya membaca field `projectId`, `title`, `description`, `startDate`, dan `endDate`.
+5. `code` dan `sequenceNumber` tidak diterima dari client karena dibuat oleh server.
+6. Task baru dibuat sebagai `BACKLOG` dengan kode project-scoped seperti `TASK-1`.
+7. Project arsip ditolak karena project arsip bersifat read-only.
+8. Success create task menulis product activity `TASK_CREATED` dan technical log `task.created`.
+
 ## Technical Debug Logging Flow
 
 1. Auth, proxy, seed, dan server action sensitif mengirim log lewat `src/lib/logger.ts`.

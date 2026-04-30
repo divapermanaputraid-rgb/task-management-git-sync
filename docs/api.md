@@ -113,6 +113,39 @@ Repo ini saat ini juga memakai Next.js Server Actions untuk mutasi internal. Jal
   - reject payload invalid menyertakan `issueCount` dan `issueFields`
   - failure database memakai `reason` yang stabil dan field error aman dari helper logger
 
+  ### `createTaskAction`
+
+- lokasi: `src/app/(app)/projects/[projectId]/tasks/new/actions.ts`
+- tujuan: membuat task backlog baru di dalam project aktif
+- auth: wajib session valid
+- permission: hanya `PM_ADMIN`
+- enforcement: actor diambil dari session lalu role actor dimuat ulang dari database sebelum task dibuat
+- validation:
+  - server hanya membaca field `projectId`, `title`, `description`, `startDate`, dan `endDate`
+  - validasi utama memakai `createTaskSchema` di `src/lib/validations/task.ts`
+  - `description` kosong dinormalisasi menjadi `null`
+  - timeline boleh kosong untuk task `BACKLOG`
+  - jika salah satu tanggal timeline diisi, `startDate` dan `endDate` wajib diisi bersama
+  - tanggal hanya diterima dalam format `YYYY-MM-DD`
+  - tanggal kalender tidak valid dan range tanggal terbalik ditolak sebelum write database
+- server-generated fields:
+  - `code` dibuat server dengan format `TASK-N`
+  - `sequenceNumber` diambil dari counter project
+  - task baru selalu dibuat sebagai `BACKLOG`
+- success log utama:
+  - `task.created`
+- reject log utama:
+  - `task.create_forbidden`
+  - `task.create_session_invalid`
+  - `task.create_invalid_payload`
+  - `task.create_project_missing`
+  - `task.create_project_archived`
+  - `task.create_conflict`
+- failure log utama:
+  - `task.create_failed`
+- product activity:
+  - `TASK_CREATED`
+
 ## Technical Debug Logging
 
 Technical debug logging untuk repo ini memakai helper terpusat `src/lib/logger.ts`.

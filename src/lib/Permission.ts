@@ -11,3 +11,7 @@ export function canCreateProject(role: AppRole) {
 export function canArchiveProject(role: AppRole) {
   return isPmAdmin(role);
 }
+
+export function canCreateTask(role: AppRole) {
+  return isPmAdmin(role);
+}

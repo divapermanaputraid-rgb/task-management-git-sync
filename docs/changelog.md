@@ -42,3 +42,12 @@ Dokumen ini memakai log berbasis sprint, bukan versioning enterprise.
 - mengaudit batas technical debug log dan product activity log agar tidak bercampur
 - membersihkan helper role/auth Sprint 2 tanpa mengubah behavior produk
 - menambahkan baseline deploy readiness untuk env, setup, migration, seed, GitHub OAuth, dan VPS startup
+
+## Sprint 3
+
+- memulai task execution flow dengan baseline create task untuk PM/Admin
+- menambahkan validasi create task untuk title, description, timeline, dan project id
+- menambahkan helper format kode task project-scoped seperti `TASK-1`
+- membuat task baru sebagai `BACKLOG` dengan `code` dan `sequenceNumber` dari server
+- menolak create task pada project arsip
+- mencatat product activity `TASK_CREATED` saat task berhasil dibuat

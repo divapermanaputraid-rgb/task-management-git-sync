@@ -6,7 +6,8 @@ import { AppButton } from "@/components/ui/app-button";
 import { AppSurface } from "@/components/ui/app-surface";
 import { StatusPill } from "@/components/ui/status-pill";
 import { getLoginRedirectUrl } from "@/lib/auth/redirects";
-import { canArchiveProject } from "@/lib/Permission";
+import { canArchiveProject, canCreateTask } from "@/lib/Permission";
+
 import { getVisibleProjectDetail } from "@/lib/projects/queries";
 
 import { ProjectArchiveForm } from "./_components/project-archive-form";
@@ -37,6 +38,7 @@ export default async function ProjectDetailPage({
 
   const isArchived = project.status === "ARCHIVED";
   const canManageArchive = canArchiveProject(session.user.role);
+  const canManageTasks = canCreateTask(session.user.role);
   const statusLabel = isArchived ? "Arsip" : "Aktif";
   const statusTone = isArchived ? "neutral" : "success";
 
@@ -60,6 +62,11 @@ export default async function ProjectDetailPage({
         action={
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <StatusPill tone={statusTone}>{statusLabel}</StatusPill>
+            {canManageTasks && !isArchived ? (
+              <AppButton href={`/projects/${project.id}/tasks/new`}>
+                Buat Task
+              </AppButton>
+            ) : null}
 
             {canManageArchive ? (
               <ProjectArchiveForm
