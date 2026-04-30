@@ -1,3 +1,4 @@
+import type { AppRole } from "@/lib/auth/roles";
 import { prisma } from "@/lib/db/prisma";
 import { logger } from "@/lib/logger";
 
@@ -9,6 +10,37 @@ const authUserSelect = {
   role: true,
   githubAccountId: true,
 } as const;
+
+type AuthUser = {
+  id: string;
+  name: string | null;
+  email: string;
+  passwordHash: string | null;
+  role: AppRole;
+  githubAccountId: string | null;
+};
+
+type ResolveGithubUserPlan =
+  | {
+      kind: "use_linked_user";
+      user: AuthUser;
+    }
+  | {
+      kind: "link_email_user";
+      userId: string;
+      name: string | null;
+      githubAccountId: string;
+    }
+  | {
+      kind: "create_user";
+      email: string;
+      name: string | null;
+      role: "DEVELOPER";
+      githubAccountId: string;
+    }
+  | {
+      kind: "identity_conflict";
+    };
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -28,6 +60,52 @@ function isUniqueConstraintError(error: unknown) {
   const errorWithCode = error as { code?: unknown };
 
   return errorWithCode.code === "P2002";
+}
+
+export function planGithubUserResolution(params: {
+  githubAccountId: string;
+  email: string;
+  name?: string | null;
+  existingLinkedUser: AuthUser | null;
+  existingUserByEmail: AuthUser | null;
+}): ResolveGithubUserPlan {
+  const normalizedEmail = normalizeEmail(params.email);
+  const normalizedName = normalizeGithubName(params.name);
+
+  if (params.existingLinkedUser) {
+    return {
+      kind: "use_linked_user",
+      user: params.existingLinkedUser,
+    };
+  }
+
+  if (!params.existingUserByEmail) {
+    return {
+      kind: "create_user",
+      email: normalizedEmail,
+      name: normalizedName,
+      role: "DEVELOPER",
+      githubAccountId: params.githubAccountId,
+    };
+  }
+
+  if (params.existingUserByEmail.githubAccountId === null) {
+    return {
+      kind: "link_email_user",
+      userId: params.existingUserByEmail.id,
+      name: params.existingUserByEmail.name ?? normalizedName,
+      githubAccountId: params.githubAccountId,
+    };
+  }
+
+  if (params.existingUserByEmail.githubAccountId === params.githubAccountId) {
+    return {
+      kind: "use_linked_user",
+      user: params.existingUserByEmail,
+    };
+  }
+
+  return { kind: "identity_conflict" };
 }
 
 export async function getUserByEmail(email: string) {
@@ -56,38 +134,40 @@ export async function resolveGithubUser(params: {
   email: string;
   name?: string | null;
 }) {
-  const normalizedEmail = normalizeEmail(params.email);
-  const normalizedName = normalizeGithubName(params.name);
-
   try {
     return await prisma.$transaction(async (tx) => {
-      const linkedUser = await tx.user.findUnique({
+      const existingLinkedUser = await tx.user.findUnique({
         where: { githubAccountId: params.githubAccountId },
         select: authUserSelect,
       });
 
-      if (linkedUser) {
-        return { ok: true as const, user: linkedUser };
-      }
-
-      const emailUser = await tx.user.findUnique({
-        where: { email: normalizedEmail },
+      const existingUserByEmail = await tx.user.findUnique({
+        where: { email: normalizeEmail(params.email) },
         select: authUserSelect,
       });
 
-      if (emailUser) {
-        if (
-          emailUser.githubAccountId &&
-          emailUser.githubAccountId !== params.githubAccountId
-        ) {
-          return { ok: false as const, reason: "identity_conflict" as const };
-        }
+      const plan = planGithubUserResolution({
+        githubAccountId: params.githubAccountId,
+        email: params.email,
+        name: params.name,
+        existingLinkedUser,
+        existingUserByEmail,
+      });
 
+      if (plan.kind === "identity_conflict") {
+        return { ok: false as const, reason: "identity_conflict" as const };
+      }
+
+      if (plan.kind === "use_linked_user") {
+        return { ok: true as const, user: plan.user };
+      }
+
+      if (plan.kind === "link_email_user") {
         const linkedEmailUser = await tx.user.update({
-          where: { id: emailUser.id },
+          where: { id: plan.userId },
           data: {
-            githubAccountId: params.githubAccountId,
-            name: emailUser.name ?? normalizedName,
+            githubAccountId: plan.githubAccountId,
+            name: plan.name,
           },
           select: authUserSelect,
         });
@@ -97,10 +177,10 @@ export async function resolveGithubUser(params: {
 
       const createdUser = await tx.user.create({
         data: {
-          email: normalizedEmail,
-          name: normalizedName,
-          role: "DEVELOPER",
-          githubAccountId: params.githubAccountId,
+          email: plan.email,
+          name: plan.name,
+          role: plan.role,
+          githubAccountId: plan.githubAccountId,
         },
         select: authUserSelect,
       });
