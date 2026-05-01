@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { createTaskSchema } from "@/lib/validations/task";
+import { createTaskSchema, setTaskStatusSchema } from "@/lib/validations/task";
 
 test("createTaskSchema normalizes blank optional fields", () => {
   const result = createTaskSchema.safeParse({
@@ -99,6 +99,59 @@ test("createTaskSchema rejects reversed date ranges", () => {
       {
         path: "endDate",
         message: "Tanggal akhir harus sama atau setelah tanggal mulai.",
+      },
+    ],
+  );
+});
+
+test("setTaskStatusSchema accepts valid status payload", () => {
+  const result = setTaskStatusSchema.safeParse({
+    projectId: "project_123",
+    taskId: "task_123",
+    nextStatus: "IN_PROGRESS",
+  });
+
+  assert.equal(result.success, true);
+
+  if (!result.success) {
+    return;
+  }
+
+  assert.equal(result.data.projectId, "project_123");
+  assert.equal(result.data.taskId, "task_123");
+  assert.equal(result.data.nextStatus, "IN_PROGRESS");
+});
+
+test("setTaskStatusSchema rejects invalid status payload", () => {
+  const result = setTaskStatusSchema.safeParse({
+    projectId: " ",
+    taskId: "",
+    nextStatus: "ARCHIVED",
+  });
+
+  assert.equal(result.success, false);
+
+  if (result.success) {
+    return;
+  }
+
+  assert.deepEqual(
+    result.error.issues.map((issue) => ({
+      path: issue.path.join("."),
+      message: issue.message,
+    })),
+    [
+      {
+        path: "projectId",
+        message: "Project tidak valid.",
+      },
+      {
+        path: "taskId",
+        message: "Task tidak valid.",
+      },
+      {
+        path: "nextStatus",
+        message: "Status task tidak valid.",
       },
     ],
   );

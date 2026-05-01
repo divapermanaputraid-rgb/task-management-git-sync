@@ -53,3 +53,7 @@ Dokumen ini memakai log berbasis sprint, bukan versioning enterprise.
 - mencatat product activity `TASK_CREATED` saat task berhasil dibuat
 - menambahkan board task read-only di detail project dengan kolom `BACKLOG`, `TODO`, `IN_PROGRESS`, `IN_REVIEW`, dan `DONE`
 - menampilkan kartu task aktif dengan code, title, timeline, primary owner, dan jumlah assignee
+- menambahkan helper transisi status task untuk rule PM/Admin dan Developer
+- menambahkan validasi payload status task dan backend action `setTaskStatusAction`
+- mencatat product activity `STATUS_CHANGED` saat status task berhasil diubah
+- menolak status mutation pada project arsip, task arsip, payload invalid, dan stale transition state

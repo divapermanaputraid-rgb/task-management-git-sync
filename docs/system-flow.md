@@ -88,6 +88,17 @@ Dokumen ini hanya mencatat alur yang sudah ada di repo saat ini.
 4. Board masih read-only sampai status transition diaktifkan.
 5. Project arsip tetap bisa dibaca, tetapi tidak menampilkan kontrol mutasi baru.
 
+## Task Status Mutation Flow
+
+1. Server action status task menerima `projectId`, `taskId`, dan `nextStatus` dari form payload.
+2. Actor dari session dimuat ulang dari database sebelum perubahan status dijalankan.
+3. Sistem mengambil snapshot task dengan status project, status task, archived state, assignee, dan primary owner.
+4. PM/Admin boleh memindahkan task valid ke status workflow mana pun.
+5. Developer hanya boleh memindahkan task yang ditugaskan kepadanya melalui transisi `TODO -> IN_PROGRESS`, `IN_PROGRESS -> IN_REVIEW`, dan `IN_REVIEW -> IN_PROGRESS`.
+6. Status non-`BACKLOG` wajib memiliki minimal satu assignee dan satu primary owner.
+7. Project arsip, task arsip, transisi stale, dan payload invalid ditolak sebelum status task ditulis.
+8. Success status mutation menulis product activity `STATUS_CHANGED` dan technical log `task.status_changed`.
+
 ## Technical Debug Logging Flow
 
 1. Auth, proxy, seed, dan server action sensitif mengirim log lewat `src/lib/logger.ts`.
@@ -104,5 +115,6 @@ Saat ini mutasi sensitif yang sudah ada di repo adalah:
 - create project
 - archive project
 - unarchive project
+- set task status
 
 Semua mutasi di atas sudah diproteksi di server dan tidak hanya bergantung pada UI.

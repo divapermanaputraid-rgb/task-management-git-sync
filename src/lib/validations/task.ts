@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isTaskStatus, type TaskStatus } from "@/lib/tasks/status";
 
 const taskDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -117,3 +118,35 @@ export const createTaskSchema = z
   });
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
+
+const taskStatusSchema = z.unknown().transform((value, ctx): TaskStatus => {
+  if (typeof value !== "string") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Status task tidak valid.",
+    });
+
+    return z.NEVER;
+  }
+
+  const trimmedValue = value.trim();
+
+  if (!isTaskStatus(trimmedValue)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Status task tidak valid.",
+    });
+
+    return z.NEVER;
+  }
+
+  return trimmedValue;
+});
+
+export const setTaskStatusSchema = z.object({
+  projectId: z.string().trim().min(1, "Project tidak valid."),
+  taskId: z.string().trim().min(1, "Task tidak valid."),
+  nextStatus: taskStatusSchema,
+});
+
+export type SetTaskStatusInput = z.infer<typeof setTaskStatusSchema>;

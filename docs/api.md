@@ -113,7 +113,7 @@ Repo ini saat ini juga memakai Next.js Server Actions untuk mutasi internal. Jal
   - reject payload invalid menyertakan `issueCount` dan `issueFields`
   - failure database memakai `reason` yang stabil dan field error aman dari helper logger
 
-  ### `createTaskAction`
+### `createTaskAction`
 
 - lokasi: `src/app/(app)/projects/[projectId]/tasks/new/actions.ts`
 - tujuan: membuat task backlog baru di dalam project aktif
@@ -145,6 +145,41 @@ Repo ini saat ini juga memakai Next.js Server Actions untuk mutasi internal. Jal
   - `task.create_failed`
 - product activity:
   - `TASK_CREATED`
+
+### `setTaskStatusAction`
+
+- lokasi: `src/app/(app)/projects/[projectId]/tasks/actions.ts`
+- tujuan: mengubah status task di dalam project tanpa membuka broad task editing
+- auth: wajib session valid
+- permission:
+  - `PM_ADMIN` boleh memindahkan task valid ke status workflow mana pun
+  - `DEVELOPER` hanya boleh memindahkan task yang ditugaskan kepadanya
+- enforcement:
+  - actor diambil dari session lalu role actor dimuat ulang dari database
+  - task snapshot dimuat dengan status project, archived state, assignee, dan primary owner sebelum mutasi
+  - transisi divalidasi lewat `validateTaskStatusTransition` di `src/lib/tasks/status.ts`
+- validation:
+  - server hanya membaca field `projectId`, `taskId`, dan `nextStatus`
+  - validasi payload memakai `setTaskStatusSchema` di `src/lib/validations/task.ts`
+  - `nextStatus` harus salah satu dari `BACKLOG`, `TODO`, `IN_PROGRESS`, `IN_REVIEW`, atau `DONE`
+- transition rules:
+  - Developer hanya boleh menjalankan `TODO -> IN_PROGRESS`, `IN_PROGRESS -> IN_REVIEW`, dan `IN_REVIEW -> IN_PROGRESS`
+  - Developer tidak boleh mengatur status `DONE`
+  - status non-`BACKLOG` wajib memiliki minimal satu assignee dan satu primary owner
+  - project arsip dan task arsip ditolak sebelum write database
+  - update status memakai guard status lama agar request stale atau double submit tidak dianggap sukses
+- success log utama:
+  - `task.status_changed`
+- reject log utama:
+  - `task.status_session_invalid`
+  - `task.status_invalid_payload`
+  - `task.status_missing`
+  - `task.status_invalid_state`
+  - `task.status_conflict`
+- failure log utama:
+  - `task.status_failed`
+- product activity:
+  - `STATUS_CHANGED`
 
 ## Technical Debug Logging
 
